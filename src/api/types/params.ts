@@ -1,7 +1,9 @@
 // Request actualizar parametro
 export interface updateParam {
   parametrosId: number;
+  parametrosNombre: string;
   parametrosValor: string;
+  parametrosDescripcion: string;
 }
 
 // Request consulta parametros

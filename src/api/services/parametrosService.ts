@@ -9,7 +9,7 @@ import type { responseAllParams, updateParam } from "../types/params";
 export async function updateParams(
   data: updateParam
 ): Promise<responseAllParams> {
-  const url = `${BASE_URLS.MSGENERAL}/${CONTROLLER.PARAMETROS}/${ENDPOINT.UPDATEPARAM}`;
+  const url = `${BASE_URLS.MSGENERAL}/${CONTROLLER.CONFIGURACION}/${ENDPOINT.UPDATEPARAM}`;
 
   return httpPost<updateParam, responseAllParams>(url, data);
 }
@@ -22,7 +22,7 @@ export async function updateParams(
 export async function searchParams(
   filters: Record<string, string | number | boolean> = {}
 ): Promise<responseAllParams[]> {
-  const url = `${BASE_URLS.MSGENERAL}/${CONTROLLER.PARAMETROS}/${ENDPOINT.SEARCHPARAMS}`;
+  const url = `${BASE_URLS.MSGENERAL}/${CONTROLLER.CONFIGURACION}/${ENDPOINT.SEARCHPARAMS}`;
 
   return httpGet<responseAllParams[]>(url, filters);
 }

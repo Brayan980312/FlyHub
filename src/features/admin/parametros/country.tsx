@@ -14,49 +14,52 @@ import {
   CardContent,
   IconButton,
   Box,
-  useTheme,
+  Checkbox,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import {
   Save as SaveIcon,
   Edit as EditIcon,
+  Add as AddIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import type { responseAllParams } from "../../../api/types/params";
 import type { ErrorResponse } from "../../../api/types/errorResponse";
-import {
-  searchParams,
-  updateParams,
-} from "../../../api/services/parametrosService";
 import { useAppUI } from "../../../context/useAppUI";
+import {
+  searchPaises,
+  createUpdatePaises,
+} from "../../../api/services/paisService";
+import type { responseAllCountry } from "../../../api/types/country";
 
-const ParametrosForm: React.FC = () => {
+const PaisForm: React.FC = () => {
   const { mostrarNotificacion } = useAppUI();
   const theme = useTheme();
 
-  const [parametros, setParametros] = useState<responseAllParams[]>([]);
+  const [paises, setPaises] = useState<responseAllCountry[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [selectedParametro, setSelectedParametro] =
-    useState<responseAllParams | null>(null);
-  const [valorValor, setValorValor] = useState("");
-  const [valorNombre, setValorNombre] = useState("");
-  const [valorDescripcion, setValorDescripcion] = useState("");
-  const [valorId, setValorId] = useState(0);
+  const [selectedPais, setSelectedPais] = useState<responseAllCountry | null>(
+    null
+  );
+
+  const [paisId, setPaisId] = useState(0);
+  const [paisNombre, setPaisNombre] = useState("");
+  const [paisNomenclatura, setPaisNomenclatura] = useState("");
+  const [paisInternacional, setPaisInternacional] = useState(false);
+  const [paisEstado, setPaisEstado] = useState(true);
+  const [modoNuevo, setModoNuevo] = useState(false);
 
   useEffect(() => {
-    handleSearchParams();
+    handleSearchPaises();
   }, []);
 
-  const handleSearchParams = async () => {
-    const dataObtenida: responseAllParams[] = await searchParams();
-    setParametros(dataObtenida);
+  const handleSearchPaises = async () => {
+    const dataObtenida: responseAllCountry[] = await searchPaises();
+    setPaises(dataObtenida);
   };
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -64,45 +67,72 @@ const ParametrosForm: React.FC = () => {
     setPage(0);
   };
 
-  const handleEdit = (parametro: responseAllParams) => {
-    setSelectedParametro(parametro);
-    setValorId(parametro.parametrosId);
-    setValorNombre(parametro.parametrosNombre.toString());
-    setValorValor(parametro.parametrosValor.toString());
-    setValorDescripcion(parametro.parametrosDescripcion.toString());
+  const limpiarFormulario = () => {
+    setPaisId(0);
+    setPaisNombre("");
+    setPaisNomenclatura("");
+    setPaisInternacional(false);
+    setPaisEstado(true);
+    setSelectedPais(null);
+    setModoNuevo(false);
   };
 
-  const handleCancel = () => {
-    setSelectedParametro(null);
-    setValorValor("");
+  const handleEdit = (pais: responseAllCountry) => {
+    setSelectedPais(pais);
+    setPaisId(pais.paisId);
+    setPaisNombre(pais.paisNombre);
+    setPaisNomenclatura(pais.paisNomenclatura);
+    setPaisInternacional(pais.paisInternacional);
+    setPaisEstado(pais.paisEstado);
+    setModoNuevo(false);
   };
 
-  const handleUpdate = async () => {
-    if (!selectedParametro) return;
+  const handleNuevo = () => {
+    limpiarFormulario();
+    setModoNuevo(true);
+  };
 
+  const handleCancel = () => limpiarFormulario();
+
+  const handleSave = async () => {
     try {
-      await updateParams({
-        parametrosId: valorId,
-        parametrosNombre: valorNombre,
-        parametrosValor: valorValor,
-        parametrosDescripcion: valorDescripcion,
-      });
-      mostrarNotificacion(
-        "Actualización exitosa",
-        "Parámetro actualizado correctamente.",
-        "success"
-      );
+      if (modoNuevo) {
+        await createUpdatePaises({
+          paisId,
+          paisNombre,
+          paisNomenclatura,
+          paisInternacional,
+          paisEstado,
+        });
+        mostrarNotificacion(
+          "País creado",
+          "El nuevo país fue registrado correctamente.",
+          "success"
+        );
+      } else if (selectedPais) {
+        await createUpdatePaises({
+          paisId,
+          paisNombre,
+          paisNomenclatura,
+          paisInternacional,
+          paisEstado,
+        });
+        mostrarNotificacion(
+          "Actualización exitosa",
+          "País actualizado correctamente.",
+          "success"
+        );
+      }
 
-      setSelectedParametro(null);
-      setValorValor("");
-      handleSearchParams();
+      limpiarFormulario();
+      handleSearchPaises();
     } catch (error) {
       const err = error as ErrorResponse;
       if (err.status === 422 && err.detail) {
         mostrarNotificacion("Validación de negocio", err.detail, "warning");
       } else {
         mostrarNotificacion(
-          "Error en la apicación",
+          "Error en la aplicación",
           "Error desconocido.",
           "error"
         );
@@ -129,11 +159,28 @@ const ParametrosForm: React.FC = () => {
           gutterBottom
           sx={{ mb: 3, letterSpacing: 0.5 }}
         >
-          Parámetros del Sistema
+          Países
         </Typography>
 
-        {/* Sección de edición compacta */}
-        {selectedParametro && (
+        {/* Botón para crear nuevo país */}
+        {!selectedPais && !modoNuevo && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              sx={{
+                backgroundColor: "#0f7c77",
+                "&:hover": { backgroundColor: "#0c6d69" },
+              }}
+              onClick={handleNuevo}
+            >
+              Nuevo País
+            </Button>
+          </Box>
+        )}
+
+        {/* Sección de edición / creación */}
+        {(selectedPais || modoNuevo) && (
           <Box
             sx={{
               display: "flex",
@@ -149,31 +196,43 @@ const ParametrosForm: React.FC = () => {
             }}
           >
             <TextField
-              label="Nombre"
-              value={selectedParametro.parametrosNombre}
-              InputProps={{ readOnly: true }}
-              sx={{ flex: 2, minWidth: 220 }}
+              label="Nombre del País"
+              value={paisNombre}
+              onChange={(e) => setPaisNombre(e.target.value)}
+              sx={{ flex: 2, minWidth: 200 }}
             />
             <TextField
-              label="Valor"
-              value={valorValor}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                if (/^\d*$/.test(newValue)) setValorValor(newValue);
-              }}
+              label="Nomenclatura"
+              value={paisNomenclatura}
+              onChange={(e) => setPaisNomenclatura(e.target.value)}
               sx={{ flex: 1, minWidth: 120 }}
             />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography>Internacional</Typography>
+              <Checkbox
+                checked={paisInternacional}
+                onChange={(e) => setPaisInternacional(e.target.checked)}
+              />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography>Activo</Typography>
+              <Checkbox
+                checked={paisEstado}
+                onChange={(e) => setPaisEstado(e.target.checked)}
+              />
+            </Box>
+
             <Box sx={{ display: "flex", gap: 1 }}>
               <Button
                 variant="contained"
+                startIcon={<SaveIcon />}
                 sx={{
                   backgroundColor: "#0f7c77",
                   "&:hover": { backgroundColor: "#0c6d69" },
                 }}
-                startIcon={<SaveIcon />}
-                onClick={handleUpdate}
+                onClick={handleSave}
               >
-                Guardar
+                {modoNuevo ? "Crear" : "Guardar"}
               </Button>
               <Button
                 variant="outlined"
@@ -196,10 +255,13 @@ const ParametrosForm: React.FC = () => {
                   Nombre
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Descripción
+                  Nomenclatura
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Valor
+                  Internacional
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Activo
                 </TableCell>
                 <TableCell
                   sx={{
@@ -215,11 +277,11 @@ const ParametrosForm: React.FC = () => {
             </TableHead>
 
             <TableBody>
-              {parametros
+              {paises
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((parametro) => (
+                .map((pais) => (
                   <TableRow
-                    key={parametro.parametrosId}
+                    key={pais.paisId}
                     hover
                     sx={{
                       transition: "background 0.3s",
@@ -229,19 +291,22 @@ const ParametrosForm: React.FC = () => {
                       },
                     }}
                   >
-                    <TableCell>{parametro.parametrosNombre}</TableCell>
+                    <TableCell>{pais.paisNombre}</TableCell>
+                    <TableCell>{pais.paisNomenclatura}</TableCell>
                     <TableCell>
-                      {parametro.parametrosDescripcion || "—"}
+                      <Checkbox checked={pais.paisInternacional} disabled />
                     </TableCell>
-                    <TableCell>{parametro.parametrosValor}</TableCell>
+                    <TableCell>
+                      <Checkbox checked={pais.paisEstado} disabled />
+                    </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="Editar parámetro">
+                      <Tooltip title="Editar país">
                         <IconButton
                           sx={{
                             color: "#0f7c77",
                             "&:hover": { backgroundColor: "#0f7c7714" },
                           }}
-                          onClick={() => handleEdit(parametro)}
+                          onClick={() => handleEdit(pais)}
                         >
                           <EditIcon />
                         </IconButton>
@@ -254,7 +319,7 @@ const ParametrosForm: React.FC = () => {
 
           <TablePagination
             component="div"
-            count={parametros.length}
+            count={paises.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
@@ -267,4 +332,4 @@ const ParametrosForm: React.FC = () => {
   );
 };
 
-export default ParametrosForm;
+export default PaisForm;

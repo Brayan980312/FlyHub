@@ -1,14 +1,14 @@
 // URL base de cada microservicio
 export const BASE_URLS = {
   MSSEGURIDAD: "https://localhost:7241/api",
-  MSGENERAL:
-    "https://microservicioprincipal-grbfdudgbwh2ebag.brazilsouth-01.azurewebsites.net/api",
+  MSGENERAL: "https://localhost:7271/api",
 } as const;
 
 // Nombres de Controllers
 export const CONTROLLER = {
   SEGURIDAD: "Seguridad",
-  PARAMETROS: "Parametros",
+  CONFIGURACION: "Configuracion",
+  ADMINISTRACION: "Administracion",
 } as const;
 
 // Nombres de endpoint
@@ -17,6 +17,10 @@ export const ENDPOINT = {
   LOGINUSER: "LoginUsuario",
   SEARCHPARAMS: "ConsultarParametros",
   UPDATEPARAM: "ActualizarParametro",
+  SEARCHCOUNTRY: "ConsultarPais",
+  CREATEUPDATECOUNTRY: "CrearActualizarPais",
+  SEARCHCITY: "ConsultarCiudad",
+  CREATEUPDATECITY: "CrearActualizarCiudad",
 } as const;
 
 // Timeout por defecto para fetch
