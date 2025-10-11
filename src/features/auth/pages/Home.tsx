@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ExpandLess, ExpandMore, FlightTakeoff } from "@mui/icons-material";
 import AnimatedContainer from "../../components/AnimatedContainer";
 import LoadingModal from "../../components/LoadingModal";
-import Notification from "../../../components/Notification";
+import Notification from "../../components/Notification";
 import { STORAGE_KEYS } from "../../../api/constans";
 import type { ErrorResponse } from "../../../api/types/errorResponse";
 import { loginUser, registerUser } from "../../../api/services/authService";
@@ -150,6 +150,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     // Simular un proceso de carga, por ejemplo 2 segundos
     const timer = setTimeout(() => {
+      setMessageLoading("Cargando...");
       setLoading(false); // Oculta el modal automáticamente
     }, 5000);
 

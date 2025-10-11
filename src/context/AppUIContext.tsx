@@ -1,7 +1,7 @@
 import React, { createContext, useState } from "react";
 import type { ReactNode } from "react";
 import type { AlertColor } from "@mui/material";
-import Notification from "../components/Notification";
+import Notification from "../features/components/Notification";
 import LoadingModal from "../features/components/LoadingModal";
 interface AppUIContextProps {
   mostrarNotificacion: (

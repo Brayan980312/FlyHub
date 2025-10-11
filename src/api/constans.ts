@@ -21,6 +21,8 @@ export const ENDPOINT = {
   CREATEUPDATECOUNTRY: "CrearActualizarPais",
   SEARCHCITY: "ConsultarCiudad",
   CREATEUPDATECITY: "CrearActualizarCiudad",
+  SEARCHMETHODPAY: "ConsultarMetodoPago",
+  CREATEUPDATEMETHODPAY: "CrearActualizarMetodoPago",
 } as const;
 
 // Timeout por defecto para fetch
