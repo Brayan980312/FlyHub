@@ -22,13 +22,13 @@ import {
   Edit as EditIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import type { responseAllParams } from "../../../api/types/params";
-import type { ErrorResponse } from "../../../api/types/errorResponse";
+import type { responseAllParams } from "../../api/types/params";
+import type { ErrorResponse } from "../../api/types/errorResponse";
 import {
   searchParams,
   updateParams,
-} from "../../../api/services/parametrosService";
-import { useAppUI } from "../../../context/useAppUI";
+} from "../../api/services/parametrosService";
+import { useAppUI } from "../../context/useAppUI";
 
 const ParametrosForm: React.FC = () => {
   const { mostrarNotificacion } = useAppUI();

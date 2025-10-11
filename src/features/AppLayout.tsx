@@ -17,6 +17,12 @@ import {
   ListItemButton,
   Collapse,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -30,12 +36,17 @@ import {
   LocationCity as LocationCityIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  AttachMoney as AttachMoneyIcon,
+  AddCircle as AddCircleIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import ParametrosForm from "./admin/parametros/params";
-import PaisForm from "./admin/parametros/country";
-import CiudadForm from "./admin/parametros/city";
+import ParametrosForm from "./admin/params";
+import MetodoPagoForm from "./admin/methodPay";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import CiudadForm from "./admin/city";
+import PaisForm from "./admin/country";
 
+// ======= Tipos =======
 type MenuItemBase = {
   text: string;
   icon: React.ReactElement;
@@ -62,7 +73,7 @@ type UserRole = {
   rolId: number;
 };
 
-// 🔹 Estilos base
+// ======= Estilos =======
 const AppBarStyled = styled(AppBar)(() => ({
   background: "rgba(25, 25, 25, 0.75)",
   backdropFilter: "blur(12px)",
@@ -107,12 +118,15 @@ const GlassContent = styled(Box)(() => ({
   boxShadow: "0 4px 25px rgba(0,0,0,0.3)",
 }));
 
-// 🔹 Componente principal
+// ======= Componente principal =======
 const AppLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [selectedMenuItem, setSelectedMenuItem] = useState<string>("");
   const [collapsed, setCollapsed] = useState(false);
+  const [creditos, setCreditos] = useState<number>(50000); // 💰 Valor inicial
+  const [modalOpen, setModalOpen] = useState(false);
+  const [valorCargar, setValorCargar] = useState<number>(0);
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -124,13 +138,26 @@ const AppLayout: React.FC = () => {
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
   const handleCollapseToggle = () => setCollapsed(!collapsed);
-
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
 
-  // 🔹 Menú principal
+  // ======= Nueva funcionalidad: Cargar créditos =======
+  const handleAbrirModal = () => setModalOpen(true);
+  const handleCerrarModal = () => {
+    setValorCargar(0);
+    setModalOpen(false);
+  };
+
+  const handleCargarCreditos = () => {
+    if (valorCargar > 0) {
+      setCreditos((prev) => prev + valorCargar);
+      handleCerrarModal();
+    }
+  };
+
+  // ======= Menú =======
   const adminMenu: MenuItem[] = [
     {
       text: "Configuración",
@@ -139,17 +166,18 @@ const AppLayout: React.FC = () => {
     },
     {
       text: "Administración",
-      icon: <SettingsIcon />,
+      icon: <AdminPanelSettingsIcon />,
       children: [
-        {
-          text: "País",
-          icon: <PublicIcon />,
-          component: <PaisForm />,
-        },
+        { text: "País", icon: <PublicIcon />, component: <PaisForm /> },
         {
           text: "Ciudad",
           icon: <LocationCityIcon />,
           component: <CiudadForm />,
+        },
+        {
+          text: "Metodo de pago",
+          icon: <AttachMoneyIcon />,
+          component: <MetodoPagoForm />,
         },
       ],
     },
@@ -189,11 +217,10 @@ const AppLayout: React.FC = () => {
   };
 
   const handleMenuClick = (item: MenuItem) => {
-    if (collapsed) setCollapsed(false); // 🔹 Si está colapsado, se expande automáticamente
-
-    if (item.children) {
+    if (collapsed) setCollapsed(false);
+    if (item.children)
       setOpenSubmenu(openSubmenu === item.text ? null : item.text);
-    } else {
+    else {
       setSelectedMenuItem(item.text);
       setOpenSubmenu(null);
       if (isMobile) handleDrawerToggle();
@@ -201,11 +228,12 @@ const AppLayout: React.FC = () => {
   };
 
   const handleSubmenuClick = (subItem: MenuItemWithComponent) => {
-    if (collapsed) setCollapsed(false); // 🔹 Se expande al seleccionar un submenú
+    if (collapsed) setCollapsed(false);
     setSelectedMenuItem(subItem.text);
     if (isMobile) handleDrawerToggle();
   };
 
+  // ======= Drawer =======
   const drawer = (
     <DrawerContainer>
       <Box>
@@ -231,7 +259,6 @@ const AppLayout: React.FC = () => {
         <List>
           {menuItems.map((item) => {
             const isOpen = openSubmenu === item.text;
-
             return (
               <React.Fragment key={item.text}>
                 <Tooltip title={collapsed ? item.text : ""} placement="right">
@@ -244,8 +271,6 @@ const AppLayout: React.FC = () => {
                             ? "rgba(255,255,255,0.12)"
                             : "transparent",
                         justifyContent: collapsed ? "center" : "flex-start",
-                        paddingTop: 0,
-                        paddingBottom: 0,
                       }}
                     >
                       <ListItemIcon
@@ -277,8 +302,6 @@ const AppLayout: React.FC = () => {
                                 selectedMenuItem === subItem.text
                                   ? "rgba(255,255,255,0.12)"
                                   : "transparent",
-                              paddingTop: 0,
-                              paddingBottom: 0,
                             }}
                             onClick={() => handleSubmenuClick(subItem)}
                           >
@@ -325,10 +348,10 @@ const AppLayout: React.FC = () => {
     </DrawerContainer>
   );
 
+  // ======= Render =======
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-
       <AppBarStyled
         position="fixed"
         sx={{
@@ -347,30 +370,44 @@ const AppLayout: React.FC = () => {
           {isMobile && (
             <IconButton
               color="inherit"
-              aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: "none" } }}
+              sx={{ mr: 2 }}
             >
               <MenuIcon />
             </IconButton>
           )}
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {usuarioNombres}
           </Typography>
+
+          {/* Créditos y botón de carga */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AttachMoneyIcon sx={{ color: "#00e676" }} />
+            <Typography variant="body1">
+              {creditos.toLocaleString("es-CO", {
+                style: "currency",
+                currency: "COP",
+                minimumFractionDigits: 0,
+              })}
+            </Typography>
+            <Tooltip title="Cargar créditos">
+              <IconButton color="inherit" onClick={handleAbrirModal}>
+                <AddCircleIcon sx={{ color: "#0f7c77" }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Toolbar>
       </AppBarStyled>
 
-      {/* Menú lateral */}
+      {/* Drawer lateral */}
       <Box
         component="nav"
         sx={{
-          width: {
-            md: collapsed ? drawerWidthCollapsed : drawerWidthExpanded,
-          },
+          width: { md: collapsed ? drawerWidthCollapsed : drawerWidthExpanded },
           flexShrink: { md: 0 },
         }}
-        aria-label="menu de navegación"
       >
         <Drawer
           variant={isMobile ? "temporary" : "permanent"}
@@ -392,6 +429,7 @@ const AppLayout: React.FC = () => {
         </Drawer>
       </Box>
 
+      {/* Contenido principal */}
       <MainContainer
         sx={{
           width: {
@@ -405,6 +443,82 @@ const AppLayout: React.FC = () => {
         <Toolbar />
         <GlassContent>{renderContent()}</GlassContent>
       </MainContainer>
+
+      {/* Modal de carga de créditos */}
+      <Dialog
+        open={modalOpen}
+        onClose={(event, reason) => {
+          // Evita cerrar al hacer clic fuera o presionar ESC
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            handleCerrarModal();
+          }
+        }}
+        PaperProps={{
+          sx: {
+            background: "rgba(30,30,30,0.9)",
+            color: "#fff",
+            borderRadius: "16px",
+            backdropFilter: "blur(10px)",
+          },
+        }}
+      >
+        <DialogTitle>Cargar créditos</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Valor a cargar (COP)"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={valorCargar === 0 ? "" : valorCargar}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+
+              // Solo permitir números y vacío
+              if (/^\d*$/.test(inputValue)) {
+                const numericValue = inputValue === "" ? 0 : Number(inputValue);
+
+                // Limitar a máximo 1.000.000
+                if (numericValue <= 1000000) {
+                  setValorCargar(numericValue);
+                }
+              }
+            }}
+            placeholder="Ingrese el valor (máx. 1.000.000)"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                color: "#fff",
+                "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
+              },
+              "& .MuiInputLabel-root": { color: "#aaa" },
+              // Quitar flechas de incremento/decremento
+              "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
+                { display: "none" },
+              "& input[type=number]": { MozAppearance: "textfield" },
+            }}
+          />
+
+          {/* Mensaje de advertencia cuando se excede el límite */}
+          {valorCargar > 1000000 && (
+            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              El valor máximo permitido es 1.000.000 COP
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCerrarModal} color="error">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleCargarCreditos}
+            color="success"
+            disabled={valorCargar <= 0 || valorCargar > 1000000}
+          >
+            Cargar créditos
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

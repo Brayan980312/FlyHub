@@ -16,6 +16,7 @@ import {
   Box,
   Checkbox,
   Tooltip,
+  Autocomplete,
   useTheme,
 } from "@mui/material";
 import {
@@ -24,35 +25,38 @@ import {
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import type { ErrorResponse } from "../../../api/types/errorResponse";
-import { useAppUI } from "../../../context/useAppUI";
-import {
-  searchPaises,
-  createUpdatePaises,
-} from "../../../api/services/paisService";
-import type { responseAllCountry } from "../../../api/types/country";
 
-const PaisForm: React.FC = () => {
+const CiudadForm: React.FC = () => {
   const { mostrarNotificacion } = useAppUI();
   const theme = useTheme();
 
+  // Estados principales
+  const [ciudades, setCiudades] = useState<responseAllCity[]>([]);
   const [paises, setPaises] = useState<responseAllCountry[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [selectedPais, setSelectedPais] = useState<responseAllCountry | null>(
+  const [selectedCiudad, setSelectedCiudad] = useState<responseAllCity | null>(
     null
   );
 
-  const [paisId, setPaisId] = useState(0);
-  const [paisNombre, setPaisNombre] = useState("");
-  const [paisNomenclatura, setPaisNomenclatura] = useState("");
-  const [paisInternacional, setPaisInternacional] = useState(false);
-  const [paisEstado, setPaisEstado] = useState(true);
+  // Campos de formulario
+  const [ciudadId, setCiudadId] = useState(0);
+  const [ciudadNombre, setCiudadNombre] = useState("");
+  const [ciudadNomenclatura, setCiudadNomenclatura] = useState("");
+  const [paisSeleccionado, setPaisSeleccionado] =
+    useState<responseAllCountry | null>(null);
+  const [ciudadEstado, setCiudadEstado] = useState(true);
   const [modoNuevo, setModoNuevo] = useState(false);
 
   useEffect(() => {
+    handleSearchCiudades();
     handleSearchPaises();
   }, []);
+
+  const handleSearchCiudades = async () => {
+    const dataObtenida: responseAllCity[] = await searchCity();
+    setCiudades(dataObtenida);
+  };
 
   const handleSearchPaises = async () => {
     const dataObtenida: responseAllCountry[] = await searchPaises();
@@ -68,22 +72,23 @@ const PaisForm: React.FC = () => {
   };
 
   const limpiarFormulario = () => {
-    setPaisId(0);
-    setPaisNombre("");
-    setPaisNomenclatura("");
-    setPaisInternacional(false);
-    setPaisEstado(true);
-    setSelectedPais(null);
+    setCiudadId(0);
+    setCiudadNombre("");
+    setCiudadNomenclatura("");
+    setPaisSeleccionado(null);
+    setCiudadEstado(true);
+    setSelectedCiudad(null);
     setModoNuevo(false);
   };
 
-  const handleEdit = (pais: responseAllCountry) => {
-    setSelectedPais(pais);
-    setPaisId(pais.paisId);
-    setPaisNombre(pais.paisNombre);
-    setPaisNomenclatura(pais.paisNomenclatura);
-    setPaisInternacional(pais.paisInternacional);
-    setPaisEstado(pais.paisEstado);
+  const handleEdit = (ciudad: responseAllCity) => {
+    const pais = paises.find((p) => p.paisId === ciudad.paisId) || null;
+    setSelectedCiudad(ciudad);
+    setCiudadId(ciudad.ciudadId);
+    setCiudadNombre(ciudad.ciudadNombre);
+    setCiudadNomenclatura(ciudad.ciudadNomenclatura);
+    setPaisSeleccionado(pais);
+    setCiudadEstado(ciudad.ciudadEstado);
     setModoNuevo(false);
   };
 
@@ -96,36 +101,33 @@ const PaisForm: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      if (modoNuevo) {
-        await createUpdatePaises({
-          paisId,
-          paisNombre,
-          paisNomenclatura,
-          paisInternacional,
-          paisEstado,
-        });
+      if (!paisSeleccionado) {
         mostrarNotificacion(
-          "País creado",
-          "El nuevo país fue registrado correctamente.",
-          "success"
+          "Validación",
+          "Debe seleccionar un país para la ciudad.",
+          "warning"
         );
-      } else if (selectedPais) {
-        await createUpdatePaises({
-          paisId,
-          paisNombre,
-          paisNomenclatura,
-          paisInternacional,
-          paisEstado,
-        });
-        mostrarNotificacion(
-          "Actualización exitosa",
-          "País actualizado correctamente.",
-          "success"
-        );
+        return;
       }
 
+      await createUpdateCity({
+        ciudadId,
+        ciudadNombre,
+        ciudadNomenclatura,
+        paisId: paisSeleccionado.paisId,
+        ciudadEstado,
+      });
+
+      mostrarNotificacion(
+        modoNuevo ? "Ciudad creada" : "Ciudad actualizada",
+        modoNuevo
+          ? "La nueva ciudad fue registrada correctamente."
+          : "La ciudad fue actualizada correctamente.",
+        "success"
+      );
+
       limpiarFormulario();
-      handleSearchPaises();
+      handleSearchCiudades();
     } catch (error) {
       const err = error as ErrorResponse;
       if (err.status === 422 && err.detail) {
@@ -159,11 +161,11 @@ const PaisForm: React.FC = () => {
           gutterBottom
           sx={{ mb: 3, letterSpacing: 0.5 }}
         >
-          Países
+          Ciudades
         </Typography>
 
-        {/* Botón para crear nuevo país */}
-        {!selectedPais && !modoNuevo && (
+        {/* Botón para crear nueva ciudad */}
+        {!selectedCiudad && !modoNuevo && (
           <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
             <Button
               variant="contained"
@@ -174,13 +176,13 @@ const PaisForm: React.FC = () => {
               }}
               onClick={handleNuevo}
             >
-              Nuevo País
+              Nueva Ciudad
             </Button>
           </Box>
         )}
 
-        {/* Sección de edición / creación */}
-        {(selectedPais || modoNuevo) && (
+        {/* Formulario de creación / edición */}
+        {(selectedCiudad || modoNuevo) && (
           <Box
             sx={{
               display: "flex",
@@ -196,29 +198,36 @@ const PaisForm: React.FC = () => {
             }}
           >
             <TextField
-              label="Nombre del País"
-              value={paisNombre}
-              onChange={(e) => setPaisNombre(e.target.value)}
+              label="Nombre de la Ciudad"
+              value={ciudadNombre}
+              onChange={(e) => setCiudadNombre(e.target.value)}
               sx={{ flex: 2, minWidth: 200 }}
             />
             <TextField
               label="Nomenclatura"
-              value={paisNomenclatura}
-              onChange={(e) => setPaisNomenclatura(e.target.value)}
+              value={ciudadNomenclatura}
+              onChange={(e) => setCiudadNomenclatura(e.target.value)}
               sx={{ flex: 1, minWidth: 120 }}
             />
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography>Internacional</Typography>
-              <Checkbox
-                checked={paisInternacional}
-                onChange={(e) => setPaisInternacional(e.target.checked)}
-              />
-            </Box>
+
+            <Autocomplete
+              options={paises}
+              getOptionLabel={(option) =>
+                `${option.paisNombre} (${option.paisNomenclatura})`
+              }
+              value={paisSeleccionado}
+              onChange={(_, newValue) => setPaisSeleccionado(newValue)}
+              renderInput={(params) => (
+                <TextField {...params} label="País" sx={{ minWidth: 250 }} />
+              )}
+              sx={{ flex: 2 }}
+            />
+
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Typography>Activo</Typography>
               <Checkbox
-                checked={paisEstado}
-                onChange={(e) => setPaisEstado(e.target.checked)}
+                checked={ciudadEstado}
+                onChange={(e) => setCiudadEstado(e.target.checked)}
               />
             </Box>
 
@@ -252,13 +261,13 @@ const PaisForm: React.FC = () => {
             <TableHead>
               <TableRow sx={{ backgroundColor: "#0f7c77" }}>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Nombre
+                  Ciudad
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Nomenclatura
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Internacional
+                  País
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Activo
@@ -277,49 +286,52 @@ const PaisForm: React.FC = () => {
             </TableHead>
 
             <TableBody>
-              {paises
+              {ciudades
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((pais) => (
-                  <TableRow
-                    key={pais.paisId}
-                    hover
-                    sx={{
-                      transition: "background 0.3s",
-                      "&:hover": {
-                        backgroundColor:
-                          theme.palette.mode === "dark" ? "#202322" : "#f5f9f8",
-                      },
-                    }}
-                  >
-                    <TableCell>{pais.paisNombre}</TableCell>
-                    <TableCell>{pais.paisNomenclatura}</TableCell>
-                    <TableCell>
-                      <Checkbox checked={pais.paisInternacional} disabled />
-                    </TableCell>
-                    <TableCell>
-                      <Checkbox checked={pais.paisEstado} disabled />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Editar país">
-                        <IconButton
-                          sx={{
-                            color: "#0f7c77",
-                            "&:hover": { backgroundColor: "#0f7c7714" },
-                          }}
-                          onClick={() => handleEdit(pais)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                .map((ciudad) => {
+                  const pais = paises.find((p) => p.paisId === ciudad.paisId);
+                  return (
+                    <TableRow
+                      key={ciudad.ciudadId}
+                      hover
+                      sx={{
+                        transition: "background 0.3s",
+                        "&:hover": {
+                          backgroundColor:
+                            theme.palette.mode === "dark"
+                              ? "#202322"
+                              : "#f5f9f8",
+                        },
+                      }}
+                    >
+                      <TableCell>{ciudad.ciudadNombre}</TableCell>
+                      <TableCell>{ciudad.ciudadNomenclatura}</TableCell>
+                      <TableCell>{pais ? pais.paisNombre : "—"}</TableCell>
+                      <TableCell>
+                        <Checkbox checked={ciudad.ciudadEstado} disabled />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Editar ciudad">
+                          <IconButton
+                            sx={{
+                              color: "#0f7c77",
+                              "&:hover": { backgroundColor: "#0f7c7714" },
+                            }}
+                            onClick={() => handleEdit(ciudad)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
 
           <TablePagination
             component="div"
-            count={paises.length}
+            count={ciudades.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
@@ -331,5 +343,11 @@ const PaisForm: React.FC = () => {
     </Container>
   );
 };
+import { useAppUI } from "../../context/useAppUI";
+import type { responseAllCity } from "../../api/types/city";
+import type { responseAllCountry } from "../../api/types/country";
+import { createUpdateCity, searchCity } from "../../api/services/ciudadService";
+import { searchPaises } from "../../api/services/paisService";
+import type { ErrorResponse } from "../../api/types/errorResponse";
 
-export default PaisForm;
+export default CiudadForm;
