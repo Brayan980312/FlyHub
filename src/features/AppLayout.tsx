@@ -15,17 +15,46 @@ import {
   useTheme,
   useMediaQuery,
   ListItemButton,
-  Button,
+  Collapse,
+  Tooltip,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import MenuIcon from "@mui/icons-material/Menu";
-import LogoutIcon from "@mui/icons-material/Logout";
-import SettingsIcon from "@mui/icons-material/Settings";
-import BookIcon from "@mui/icons-material/Book";
+import {
+  ExpandLess,
+  ExpandMore,
+  Menu as MenuIcon,
+  Logout as LogoutIcon,
+  Settings as SettingsIcon,
+  Book as BookIcon,
+  Public as PublicIcon,
+  LocationCity as LocationCityIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import ParametrosForm from "./admin/parametros/params";
+import PaisForm from "./admin/parametros/country";
+import CiudadForm from "./admin/parametros/city";
 
-const drawerWidth = 260;
+type MenuItemBase = {
+  text: string;
+  icon: React.ReactElement;
+};
+
+type MenuItemWithComponent = MenuItemBase & {
+  component: React.ReactElement;
+  children?: undefined;
+};
+
+type MenuItemWithChildren = MenuItemBase & {
+  children: MenuItemWithComponent[];
+  component?: undefined;
+};
+
+type MenuItem = MenuItemWithComponent | MenuItemWithChildren;
+
+const drawerWidthExpanded = 260;
+const drawerWidthCollapsed = 80;
 
 type UserRole = {
   usuarioRolId: number;
@@ -33,7 +62,7 @@ type UserRole = {
   rolId: number;
 };
 
-// 🔹 Estilos base reutilizables
+// 🔹 Estilos base
 const AppBarStyled = styled(AppBar)(() => ({
   background: "rgba(25, 25, 25, 0.75)",
   backdropFilter: "blur(12px)",
@@ -64,7 +93,6 @@ const DrawerItemButton = styled(ListItemButton)(() => ({
 const MainContainer = styled(Box)(() => ({
   flexGrow: 1,
   padding: "24px",
-  width: `calc(100% - ${drawerWidth}px)`,
   color: "#fff",
   background: "#0f1115",
   minHeight: "100vh",
@@ -82,33 +110,52 @@ const GlassContent = styled(Box)(() => ({
 // 🔹 Componente principal
 const AppLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<string>("");
+  const [collapsed, setCollapsed] = useState(false);
+
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const usuarioNombres = localStorage.getItem("usuarioNombres") || "";
   const roles = JSON.parse(localStorage.getItem("roles") || "[]") as UserRole[];
-  const [selectedMenuItem, setSelectedMenuItem] = useState<string>("");
   const userRole = roles[0] ?? null;
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+  const handleCollapseToggle = () => setCollapsed(!collapsed);
 
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
 
-  const adminMenu = [
+  // 🔹 Menú principal
+  const adminMenu: MenuItem[] = [
     {
-      text: "Parametrización",
+      text: "Configuración",
       icon: <SettingsIcon />,
       component: <ParametrosForm />,
     },
+    {
+      text: "Administración",
+      icon: <SettingsIcon />,
+      children: [
+        {
+          text: "País",
+          icon: <PublicIcon />,
+          component: <PaisForm />,
+        },
+        {
+          text: "Ciudad",
+          icon: <LocationCityIcon />,
+          component: <CiudadForm />,
+        },
+      ],
+    },
   ];
 
-  const studentMenu = [
+  const studentMenu: MenuItem[] = [
     {
       text: "Inscribir materias",
       icon: <BookIcon />,
@@ -122,7 +169,7 @@ const AppLayout: React.FC = () => {
     if (!selectedMenuItem) {
       return (
         <>
-          <Typography variant="h4" gutterBottom sx={{ color: "#00bfa5" }}>
+          <Typography variant="h4" gutterBottom sx={{ color: "#0f7c77" }}>
             Bienvenido {usuarioNombres}
           </Typography>
           <Typography>¿Qué harás hoy?</Typography>
@@ -130,58 +177,150 @@ const AppLayout: React.FC = () => {
       );
     }
 
-    const item = menuItems.find((item) => item.text === selectedMenuItem);
-    return item?.component || null;
+    for (const item of menuItems) {
+      if (item.text === selectedMenuItem && item.component)
+        return item.component;
+      if (item.children) {
+        const sub = item.children.find((c) => c.text === selectedMenuItem);
+        if (sub) return sub.component;
+      }
+    }
+    return null;
+  };
+
+  const handleMenuClick = (item: MenuItem) => {
+    if (collapsed) setCollapsed(false); // 🔹 Si está colapsado, se expande automáticamente
+
+    if (item.children) {
+      setOpenSubmenu(openSubmenu === item.text ? null : item.text);
+    } else {
+      setSelectedMenuItem(item.text);
+      setOpenSubmenu(null);
+      if (isMobile) handleDrawerToggle();
+    }
+  };
+
+  const handleSubmenuClick = (subItem: MenuItemWithComponent) => {
+    if (collapsed) setCollapsed(false); // 🔹 Se expande al seleccionar un submenú
+    setSelectedMenuItem(subItem.text);
+    if (isMobile) handleDrawerToggle();
   };
 
   const drawer = (
     <DrawerContainer>
       <Box>
-        <Toolbar>
-          <Typography variant="subtitle1" noWrap component="div">
-            FlyHub
-          </Typography>
+        <Toolbar
+          sx={{ justifyContent: collapsed ? "center" : "space-between" }}
+        >
+          {!collapsed && (
+            <Typography variant="subtitle1" noWrap component="div">
+              FlyHub
+            </Typography>
+          )}
+          <IconButton
+            onClick={handleCollapseToggle}
+            color="inherit"
+            size="small"
+          >
+            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
         </Toolbar>
+
         <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+
         <List>
-          {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding>
-              <DrawerItemButton
-                onClick={() => {
-                  setSelectedMenuItem(item.text);
-                  if (isMobile) handleDrawerToggle();
-                }}
-                sx={{
-                  backgroundColor:
-                    selectedMenuItem === item.text
-                      ? "rgba(255,255,255,0.12)"
-                      : "transparent",
-                }}
-              >
-                <ListItemIcon sx={{ color: "#00bfa5" }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} />
-              </DrawerItemButton>
-            </ListItem>
-          ))}
+          {menuItems.map((item) => {
+            const isOpen = openSubmenu === item.text;
+
+            return (
+              <React.Fragment key={item.text}>
+                <Tooltip title={collapsed ? item.text : ""} placement="right">
+                  <ListItem disablePadding>
+                    <DrawerItemButton
+                      onClick={() => handleMenuClick(item)}
+                      sx={{
+                        backgroundColor:
+                          selectedMenuItem === item.text
+                            ? "rgba(255,255,255,0.12)"
+                            : "transparent",
+                        justifyContent: collapsed ? "center" : "flex-start",
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          color: "#0f7c77",
+                          minWidth: collapsed ? "0" : "40px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      {!collapsed && <ListItemText primary={item.text} />}
+                      {!collapsed &&
+                        item.children &&
+                        (isOpen ? <ExpandLess /> : <ExpandMore />)}
+                    </DrawerItemButton>
+                  </ListItem>
+                </Tooltip>
+
+                {!collapsed && item.children && (
+                  <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                      {item.children.map((subItem) => (
+                        <ListItem key={subItem.text} disablePadding>
+                          <DrawerItemButton
+                            sx={{
+                              pl: 6,
+                              backgroundColor:
+                                selectedMenuItem === subItem.text
+                                  ? "rgba(255,255,255,0.12)"
+                                  : "transparent",
+                              paddingTop: 0,
+                              paddingBottom: 0,
+                            }}
+                            onClick={() => handleSubmenuClick(subItem)}
+                          >
+                            <ListItemIcon sx={{ color: "#0f7c77" }}>
+                              {subItem.icon}
+                            </ListItemIcon>
+                            <ListItemText primary={subItem.text} />
+                          </DrawerItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Collapse>
+                )}
+              </React.Fragment>
+            );
+          })}
         </List>
       </Box>
 
       <Box>
         <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
-        <ListItem
-          sx={{
-            cursor: "pointer",
-            "&:hover": { backgroundColor: "rgba(255,255,255,0.12)" },
-          }}
-          onClick={handleLogout}
-        >
-          <ListItemIcon sx={{ color: "#f44336" }}>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText primary="Cerrar sesión" />
-        </ListItem>
+        <Tooltip title={collapsed ? "Cerrar sesión" : ""} placement="right">
+          <ListItem
+            sx={{
+              cursor: "pointer",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.12)" },
+              justifyContent: collapsed ? "center" : "flex-start",
+            }}
+            onClick={handleLogout}
+          >
+            <ListItemIcon
+              sx={{
+                color: "#f44336",
+                minWidth: collapsed ? "0" : "40px",
+                justifyContent: "center",
+              }}
+            >
+              <LogoutIcon />
+            </ListItemIcon>
+            {!collapsed && <ListItemText primary="Cerrar sesión" />}
+          </ListItem>
+        </Tooltip>
       </Box>
     </DrawerContainer>
   );
@@ -189,12 +328,19 @@ const AppLayout: React.FC = () => {
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      {/* 🔹 Barra superior */}
+
       <AppBarStyled
         position="fixed"
         sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
+          width: {
+            md: `calc(100% - ${
+              collapsed ? drawerWidthCollapsed : drawerWidthExpanded
+            }px)`,
+          },
+          ml: {
+            md: `${collapsed ? drawerWidthCollapsed : drawerWidthExpanded}px`,
+          },
+          transition: "width 0.3s ease, margin 0.3s ease",
         }}
       >
         <Toolbar>
@@ -212,27 +358,18 @@ const AppLayout: React.FC = () => {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {usuarioNombres}
           </Typography>
-
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#00bfa5",
-              color: "#fff",
-              borderRadius: "25px",
-              px: 3,
-              textTransform: "none",
-              "&:hover": { backgroundColor: "#00a896" },
-            }}
-          >
-            Ayuda
-          </Button>
         </Toolbar>
       </AppBarStyled>
 
-      {/* 🔹 Menú lateral */}
+      {/* Menú lateral */}
       <Box
         component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+        sx={{
+          width: {
+            md: collapsed ? drawerWidthCollapsed : drawerWidthExpanded,
+          },
+          flexShrink: { md: 0 },
+        }}
         aria-label="menu de navegación"
       >
         <Drawer
@@ -242,10 +379,12 @@ const AppLayout: React.FC = () => {
           ModalProps={{ keepMounted: true }}
           sx={{
             "& .MuiDrawer-paper": {
-              width: drawerWidth,
+              width: collapsed ? drawerWidthCollapsed : drawerWidthExpanded,
               border: "none",
-              borderRadius: { md: "0 20px 20px 0" },
+              borderRadius: { md: "0 0 20px 0" },
               boxShadow: "0 4px 25px rgba(0,0,0,0.3)",
+              overflowX: "hidden",
+              transition: "width 0.3s ease",
             },
           }}
         >
@@ -253,8 +392,16 @@ const AppLayout: React.FC = () => {
         </Drawer>
       </Box>
 
-      {/* 🔹 Contenido principal */}
-      <MainContainer>
+      <MainContainer
+        sx={{
+          width: {
+            md: `calc(100% - ${
+              collapsed ? drawerWidthCollapsed : drawerWidthExpanded
+            }px)`,
+          },
+          transition: "width 0.3s ease",
+        }}
+      >
         <Toolbar />
         <GlassContent>{renderContent()}</GlassContent>
       </MainContainer>

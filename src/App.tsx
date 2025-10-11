@@ -4,6 +4,7 @@ import type { JSX } from "react";
 import Home from "./features/auth/pages/Home";
 import AppLayout from "./features/AppLayout";
 import { STORAGE_KEYS } from "./api/constans";
+import { AppUIProvider } from "./context/AppUIContext";
 
 interface RequireAuthProps {
   children: JSX.Element;
@@ -26,7 +27,9 @@ export default function App() {
           path="/"
           element={
             <RequireAuth>
-              <AppLayout />
+              <AppUIProvider>
+                <AppLayout />
+              </AppUIProvider>
             </RequireAuth>
           }
         />
