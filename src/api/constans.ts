@@ -9,6 +9,7 @@ export const CONTROLLER = {
   SEGURIDAD: "Seguridad",
   CONFIGURACION: "Configuracion",
   ADMINISTRACION: "Administracion",
+  CREDITOS: "Creditos",
 } as const;
 
 // Nombres de endpoint
@@ -23,6 +24,8 @@ export const ENDPOINT = {
   CREATEUPDATECITY: "CrearActualizarCiudad",
   SEARCHMETHODPAY: "ConsultarMetodoPago",
   CREATEUPDATEMETHODPAY: "CrearActualizarMetodoPago",
+  SEARCHCREDITS: "ConsultarCreditoUsuario",
+  CREATEUPDATECREDITS: "CrearActualizarCreditoUsuario",
 } as const;
 
 // Timeout por defecto para fetch

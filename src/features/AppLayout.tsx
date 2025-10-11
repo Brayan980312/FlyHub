@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -45,6 +45,13 @@ import MetodoPagoForm from "./admin/methodPay";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import CiudadForm from "./admin/city";
 import PaisForm from "./admin/country";
+import {
+  createUpdateCreditoUsuario,
+  searchCreditoUsuario,
+} from "../api/services/creditUserService";
+import { useAppUI } from "../context/useAppUI";
+import type { ErrorResponse } from "../api/types/errorResponse";
+import type { responseAllCreditUser } from "../api/types/credist";
 
 // ======= Tipos =======
 type MenuItemBase = {
@@ -120,13 +127,15 @@ const GlassContent = styled(Box)(() => ({
 
 // ======= Componente principal =======
 const AppLayout: React.FC = () => {
+  const [creditosUsuario, setcreditosUsuario] =
+    useState<responseAllCreditUser>();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [selectedMenuItem, setSelectedMenuItem] = useState<string>("");
   const [collapsed, setCollapsed] = useState(false);
-  const [creditos, setCreditos] = useState<number>(50000); // 💰 Valor inicial
   const [modalOpen, setModalOpen] = useState(false);
   const [valorCargar, setValorCargar] = useState<number>(0);
+  const { mostrarNotificacion } = useAppUI();
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -143,6 +152,23 @@ const AppLayout: React.FC = () => {
     navigate("/login");
   };
 
+  useEffect(() => {
+    handleSearchCreditUser();
+  }, []);
+
+  const handleSearchCreditUser = async () => {
+    const dataObtenida: responseAllCreditUser = await searchCreditoUsuario();
+    console.log(dataObtenida);
+    if (
+      dataObtenida.creditoUsuarioId == null ||
+      dataObtenida.creditoUsuarioId == 0
+    ) {
+      dataObtenida.creditoUsuarioId = 0;
+      dataObtenida.creditoUsuarioCreditos = 0;
+    }
+    setcreditosUsuario(dataObtenida);
+  };
+
   // ======= Nueva funcionalidad: Cargar créditos =======
   const handleAbrirModal = () => setModalOpen(true);
   const handleCerrarModal = () => {
@@ -150,10 +176,34 @@ const AppLayout: React.FC = () => {
     setModalOpen(false);
   };
 
-  const handleCargarCreditos = () => {
+  const handleCargarCreditos = async () => {
     if (valorCargar > 0) {
-      setCreditos((prev) => prev + valorCargar);
-      handleCerrarModal();
+      try {
+        await createUpdateCreditoUsuario({
+          creditoUsuarioId: creditosUsuario?.creditoUsuarioId,
+          usuarioId: creditosUsuario?.usuarioId,
+          creditoUsuarioCreditos: valorCargar,
+          accion: 1,
+        });
+        mostrarNotificacion(
+          "Cargar creditos",
+          "Créditos cargados con exito",
+          "success"
+        );
+        handleCerrarModal();
+        handleSearchCreditUser();
+      } catch (error) {
+        const err = error as ErrorResponse;
+        if (err.status === 422 && err.detail) {
+          mostrarNotificacion("Validación de negocio", err.detail, "warning");
+        } else {
+          mostrarNotificacion(
+            "Error en la apicación",
+            "Error desconocido.",
+            "error"
+          );
+        }
+      }
     }
   };
 
@@ -183,7 +233,7 @@ const AppLayout: React.FC = () => {
     },
   ];
 
-  const studentMenu: MenuItem[] = [
+  const clientMenu: MenuItem[] = [
     {
       text: "Inscribir materias",
       icon: <BookIcon />,
@@ -191,7 +241,7 @@ const AppLayout: React.FC = () => {
     },
   ];
 
-  const menuItems = userRole?.rolId === 1 ? adminMenu : studentMenu;
+  const menuItems = userRole?.rolId === 1 ? adminMenu : clientMenu;
 
   const renderContent = () => {
     if (!selectedMenuItem) {
@@ -382,22 +432,27 @@ const AppLayout: React.FC = () => {
             {usuarioNombres}
           </Typography>
 
-          {/* Créditos y botón de carga */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <AttachMoneyIcon sx={{ color: "#00e676" }} />
-            <Typography variant="body1">
-              {creditos.toLocaleString("es-CO", {
-                style: "currency",
-                currency: "COP",
-                minimumFractionDigits: 0,
-              })}
-            </Typography>
-            <Tooltip title="Cargar créditos">
-              <IconButton color="inherit" onClick={handleAbrirModal}>
-                <AddCircleIcon sx={{ color: "#0f7c77" }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
+          {/* Créditos y botón de carga (solo clientes) */}
+          {userRole?.rolId !== 1 && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <AttachMoneyIcon sx={{ color: "#0f7c77" }} />
+              <Typography variant="body1">
+                {creditosUsuario?.creditoUsuarioCreditos.toLocaleString(
+                  "es-CO",
+                  {
+                    style: "currency",
+                    currency: "COP",
+                    minimumFractionDigits: 0,
+                  }
+                )}
+              </Typography>
+              <Tooltip title="Cargar créditos">
+                <IconButton color="inherit" onClick={handleAbrirModal}>
+                  <AddCircleIcon sx={{ color: "#0f7c77" }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
         </Toolbar>
       </AppBarStyled>
 
@@ -479,13 +534,13 @@ const AppLayout: React.FC = () => {
               if (/^\d*$/.test(inputValue)) {
                 const numericValue = inputValue === "" ? 0 : Number(inputValue);
 
-                // Limitar a máximo 1.000.000
-                if (numericValue <= 1000000) {
+                // Limitar a máximo 10.000.000
+                if (numericValue <= 10000000) {
                   setValorCargar(numericValue);
                 }
               }
             }}
-            placeholder="Ingrese el valor (máx. 1.000.000)"
+            placeholder="Ingrese el valor (máx. 10.000.000)"
             sx={{
               "& .MuiOutlinedInput-root": {
                 color: "#fff",
@@ -500,7 +555,7 @@ const AppLayout: React.FC = () => {
           />
 
           {/* Mensaje de advertencia cuando se excede el límite */}
-          {valorCargar > 1000000 && (
+          {valorCargar > 10000000 && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
               El valor máximo permitido es 1.000.000 COP
             </Typography>
@@ -513,7 +568,7 @@ const AppLayout: React.FC = () => {
           <Button
             onClick={handleCargarCreditos}
             color="success"
-            disabled={valorCargar <= 0 || valorCargar > 1000000}
+            disabled={valorCargar <= 0 || valorCargar > 10000000}
           >
             Cargar créditos
           </Button>

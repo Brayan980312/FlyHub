@@ -7,7 +7,7 @@ export interface createUpdateCountry {
   paisEstado: boolean;
 }
 
-// Request consulta paises
+// Response consulta paises
 export interface responseAllCountry {
   paisId: number;
   paisNombre: string;

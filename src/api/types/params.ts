@@ -6,7 +6,7 @@ export interface updateParam {
   parametrosDescripcion: string;
 }
 
-// Request consulta parametros
+// Response consulta parametros
 export interface responseAllParams {
   parametrosId: number;
   parametrosNombre: string;

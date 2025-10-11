@@ -7,7 +7,7 @@ export interface createUpdateCity {
   ciudadEstado: boolean;
 }
 
-// Request consulta ciudades
+// Response consulta ciudades
 export interface responseAllCity {
   ciudadId: number;
   ciudadNombre: string;

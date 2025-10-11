@@ -6,7 +6,7 @@ export interface createUpdateMethodPay {
   metodoPagoEstado: boolean;
 }
 
-// Request consulta metodos de pago
+// Response consulta metodos de pago
 export interface responseAllMethodPay {
   metodoPagoId: number;
   metodoPagoNombre: string;
