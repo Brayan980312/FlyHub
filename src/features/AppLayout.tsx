@@ -39,6 +39,8 @@ import {
   AttachMoney as AttachMoneyIcon,
   AddCircle as AddCircleIcon,
 } from "@mui/icons-material";
+import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
+import ConnectingAirportsIcon from "@mui/icons-material/ConnectingAirports";
 import { useNavigate } from "react-router-dom";
 import ParametrosForm from "./admin/params";
 import MetodoPagoForm from "./admin/methodPay";
@@ -52,6 +54,7 @@ import {
 import { useAppUI } from "../context/useAppUI";
 import type { ErrorResponse } from "../api/types/errorResponse";
 import type { responseAllCreditUser } from "../api/types/credist";
+import AvionForm from "./admin/plane";
 
 // ======= Tipos =======
 type MenuItemBase = {
@@ -230,6 +233,16 @@ const AppLayout: React.FC = () => {
           component: <MetodoPagoForm />,
         },
       ],
+    },
+    {
+      text: "Avion",
+      icon: <AirplanemodeActiveIcon />,
+      component: <AvionForm />,
+    },
+    {
+      text: "Vuelos",
+      icon: <ConnectingAirportsIcon />,
+      component: <AvionForm />,
     },
   ];
 
