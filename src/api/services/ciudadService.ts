@@ -4,7 +4,7 @@ import type { createUpdateCity, responseAllCity } from "../types/city";
 
 /**
  * Llama al MS General, para crear o actualizar la ciudad.
- * Retorna la información de todos los pais
+ * Retorna la información de todas las ciudades
  */
 export async function createUpdateCity(
   data: createUpdateCity
