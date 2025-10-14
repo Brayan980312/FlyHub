@@ -130,8 +130,11 @@ const CiudadForm: React.FC = () => {
       handleSearchCiudades();
     } catch (error) {
       const err = error as ErrorResponse;
-      if (err.status === 422 && err.detail) {
-        mostrarNotificacion("Validación de negocio", err.detail, "warning");
+      if (
+        (err.status === 422 || err.status === 403 || err.status === 401) &&
+        err.detail
+      ) {
+        mostrarNotificacion(err.title, err.detail, "warning");
       } else {
         mostrarNotificacion(
           "Error en la aplicación",
