@@ -13,7 +13,7 @@ export async function createUpdateCreditoUsuario(
   data: createUpdateCreditUser
 ): Promise<responseAllCreditUser> {
   const url = `${BASE_URLS.MSGENERAL}/${CONTROLLER.CREDITOS}/${ENDPOINT.CREATEUPDATECREDITS}`;
-  console.log(data, "data guardar");
+
   return httpPost<createUpdateCreditUser, responseAllCreditUser>(url, data);
 }
 
@@ -33,6 +33,6 @@ export async function searchCreditoUsuario(
   if (usuarioId) {
     filters.usuarioId = Number(usuarioId);
   }
-  console.log(filters, "filtros");
+
   return httpGet<responseAllCreditUser>(url, filters);
 }

@@ -132,8 +132,11 @@ const Home: React.FC = () => {
       } catch (error) {
         const err = error as ErrorResponse;
 
-        if (err.status === 422 && err.detail) {
-          setTitulo("Validación de logueo.");
+        if (
+          (err.status === 422 || err.status === 403 || err.status === 401) &&
+          err.detail
+        ) {
+          setTitulo(err.title);
           setMensaje(err.detail);
           setTipo("warning");
           setAbierto(true);
@@ -373,8 +376,11 @@ const Home: React.FC = () => {
       } catch (error) {
         const err = error as ErrorResponse;
 
-        if (err.status === 422 && err.detail) {
-          setTitulo("Validación de registro.");
+        if (
+          (err.status === 422 || err.status === 403 || err.status === 401) &&
+          err.detail
+        ) {
+          setTitulo(err.title);
           setMensaje(err.detail);
           setTipo("warning");
           setAbierto(true);
