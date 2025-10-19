@@ -27,12 +27,5 @@ export async function searchCreditoUsuario(
 ): Promise<responseAllCreditUser> {
   const url = `${BASE_URLS.MSGENERAL}/${CONTROLLER.CREDITOS}/${ENDPOINT.SEARCHCREDITS}`;
 
-  // Obtener usuarioId del localStorage
-  const usuarioId = localStorage.getItem("usuarioId");
-
-  if (usuarioId) {
-    filters.usuarioId = Number(usuarioId);
-  }
-
   return httpGet<responseAllCreditUser>(url, filters);
 }

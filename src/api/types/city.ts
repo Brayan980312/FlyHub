@@ -12,6 +12,10 @@ export interface responseAllCity {
   ciudadId: number;
   ciudadNombre: string;
   ciudadNomenclatura: string;
+  ciudadNombreNomenclatura: string;
   paisId: number;
+  paisNombre: string;
+  paisNomenclatura: string;
+  paisNombreNomenclatura: string;
   ciudadEstado: boolean;
 }

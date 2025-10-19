@@ -131,7 +131,7 @@ function getDefaultHeaders(): Record<string, string> {
  */
 export async function httpGet<TResponse>(
   url: string,
-  params: Record<string, string | number | boolean> = {},
+  params: Record<string, string | number | boolean | Date> = {},
   customHeaders: Record<string, string> = {}
 ): Promise<TResponse> {
   // Construimos los query params si existen

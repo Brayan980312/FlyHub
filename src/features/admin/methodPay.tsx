@@ -11,7 +11,10 @@ import {
   Card,
   CardContent,
   useTheme,
+  Chip,
 } from "@mui/material";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import type { responseAllMethodPay } from "../../api/types/methodPay";
 import { searchMetodoPago } from "../../api/services/metodoPagoService";
 
@@ -99,7 +102,44 @@ const MetodoPagoForm: React.FC = () => {
                     <TableCell>{metodo.metodoPagoNombre}</TableCell>
                     <TableCell>{metodo.metodoPagoDescripcion || "—"}</TableCell>
                     <TableCell>
-                      {metodo.metodoPagoEstado ? "Activo" : "Inactivo"}
+                      <Chip
+                        icon={
+                          metodo.metodoPagoEstado ? (
+                            <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />
+                          ) : (
+                            <CancelRoundedIcon sx={{ fontSize: 18 }} />
+                          )
+                        }
+                        label={metodo.metodoPagoEstado ? "Activo" : "Inactivo"}
+                        sx={{
+                          fontWeight: 600,
+                          borderRadius: "10px",
+                          px: 1,
+                          py: 0.5,
+                          color: metodo.metodoPagoEstado
+                            ? "#166534"
+                            : "#991b1b", // texto
+                          backgroundColor: metodo.metodoPagoEstado
+                            ? "rgba(22, 101, 52, 0.1)" // verde suave translúcido
+                            : "rgba(153, 27, 27, 0.1)", // rojo suave translúcido
+                          "& .MuiChip-icon": {
+                            color: metodo.metodoPagoEstado
+                              ? "#16a34a"
+                              : "#dc2626", // icono con tono fuerte
+                            ml: 0.5,
+                          },
+                          "&:hover": {
+                            backgroundColor: metodo.metodoPagoEstado
+                              ? "rgba(22, 101, 52, 0.15)"
+                              : "rgba(153, 27, 27, 0.15)",
+                            transform: "scale(1.02)",
+                            transition: "all 0.2s ease-in-out",
+                          },
+                          boxShadow: metodo.metodoPagoEstado
+                            ? "0 0 10px rgba(34, 197, 94, 0.15)"
+                            : "0 0 10px rgba(239, 68, 68, 0.15)",
+                        }}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

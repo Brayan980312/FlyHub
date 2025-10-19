@@ -17,6 +17,7 @@ import {
   Checkbox,
   Tooltip,
   useTheme,
+  Chip,
 } from "@mui/material";
 import {
   Save as SaveIcon,
@@ -24,6 +25,8 @@ import {
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import { useAppUI } from "../../context/useAppUI";
 import type { responseAllCountry } from "../../api/types/country";
 import {
@@ -55,8 +58,24 @@ const PaisForm: React.FC = () => {
   }, []);
 
   const handleSearchPaises = async () => {
-    const dataObtenida: responseAllCountry[] = await searchPaises();
-    setPaises(dataObtenida);
+    try {
+      const dataObtenida: responseAllCountry[] = await searchPaises();
+      setPaises(dataObtenida);
+    } catch (error) {
+      const err = error as ErrorResponse;
+      if (
+        (err.status === 422 || err.status === 403 || err.status === 401) &&
+        err.detail
+      ) {
+        mostrarNotificacion(err.title, err.detail, "warning");
+      } else {
+        mostrarNotificacion(
+          "Error en la apicación",
+          "Error desconocido.",
+          "error"
+        );
+      }
+    }
   };
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
@@ -300,7 +319,40 @@ const PaisForm: React.FC = () => {
                       <Checkbox checked={pais.paisInternacional} disabled />
                     </TableCell>
                     <TableCell>
-                      <Checkbox checked={pais.paisEstado} disabled />
+                      <Chip
+                        icon={
+                          pais.paisEstado ? (
+                            <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />
+                          ) : (
+                            <CancelRoundedIcon sx={{ fontSize: 18 }} />
+                          )
+                        }
+                        label={pais.paisEstado ? "Activo" : "Inactivo"}
+                        sx={{
+                          fontWeight: 600,
+                          borderRadius: "10px",
+                          px: 1,
+                          py: 0.5,
+                          color: pais.paisEstado ? "#166534" : "#991b1b", // texto
+                          backgroundColor: pais.paisEstado
+                            ? "rgba(22, 101, 52, 0.1)" // verde suave translúcido
+                            : "rgba(153, 27, 27, 0.1)", // rojo suave translúcido
+                          "& .MuiChip-icon": {
+                            color: pais.paisEstado ? "#16a34a" : "#dc2626", // icono con tono fuerte
+                            ml: 0.5,
+                          },
+                          "&:hover": {
+                            backgroundColor: pais.paisEstado
+                              ? "rgba(22, 101, 52, 0.15)"
+                              : "rgba(153, 27, 27, 0.15)",
+                            transform: "scale(1.02)",
+                            transition: "all 0.2s ease-in-out",
+                          },
+                          boxShadow: pais.paisEstado
+                            ? "0 0 10px rgba(34, 197, 94, 0.15)"
+                            : "0 0 10px rgba(239, 68, 68, 0.15)",
+                        }}
+                      />
                     </TableCell>
                     <TableCell align="center">
                       <Tooltip title="Editar país">

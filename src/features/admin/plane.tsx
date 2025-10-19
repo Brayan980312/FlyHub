@@ -18,6 +18,7 @@ import {
   Tooltip,
   Autocomplete,
   useTheme,
+  Chip,
 } from "@mui/material";
 import {
   Save as SaveIcon,
@@ -26,6 +27,8 @@ import {
   AirlineSeatReclineExtra as SeatIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import { useAppUI } from "../../context/useAppUI";
 import { searchCity } from "../../api/services/ciudadService";
 import type { responseAllCity } from "../../api/types/city";
@@ -291,20 +294,45 @@ const AvionForm: React.FC = () => {
               {aviones
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((avion) => {
-                  const ciudad = ciudades.find(
-                    (c) => c.ciudadId === avion.ciudadId
-                  );
                   return (
                     <TableRow key={avion.avionId} hover>
                       <TableCell>{avion.avionNombre}</TableCell>
+                      <TableCell>{avion.ciudadNombreNomenclatura}</TableCell>
                       <TableCell>
-                        {ciudad?.ciudadNombre +
-                          " (" +
-                          ciudad?.ciudadNomenclatura +
-                          ")" || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Checkbox checked={avion.avionEstado} disabled />
+                        <Chip
+                          icon={
+                            avion.avionEstado ? (
+                              <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />
+                            ) : (
+                              <CancelRoundedIcon sx={{ fontSize: 18 }} />
+                            )
+                          }
+                          label={avion.avionEstado ? "Activo" : "Inactivo"}
+                          sx={{
+                            fontWeight: 600,
+                            borderRadius: "10px",
+                            px: 1,
+                            py: 0.5,
+                            color: avion.avionEstado ? "#166534" : "#991b1b", // texto
+                            backgroundColor: avion.avionEstado
+                              ? "rgba(22, 101, 52, 0.1)" // verde suave translúcido
+                              : "rgba(153, 27, 27, 0.1)", // rojo suave translúcido
+                            "& .MuiChip-icon": {
+                              color: avion.avionEstado ? "#16a34a" : "#dc2626", // icono con tono fuerte
+                              ml: 0.5,
+                            },
+                            "&:hover": {
+                              backgroundColor: avion.avionEstado
+                                ? "rgba(22, 101, 52, 0.15)"
+                                : "rgba(153, 27, 27, 0.15)",
+                              transform: "scale(1.02)",
+                              transition: "all 0.2s ease-in-out",
+                            },
+                            boxShadow: avion.avionEstado
+                              ? "0 0 10px rgba(34, 197, 94, 0.15)"
+                              : "0 0 10px rgba(239, 68, 68, 0.15)",
+                          }}
+                        />
                       </TableCell>
                       <TableCell align="center">
                         <Tooltip title="Editar avión">

@@ -11,6 +11,8 @@ export const CONTROLLER = {
   ADMINISTRACION: "Administracion",
   CREDITOS: "Creditos",
   AVION: "Avion",
+  VUELO: "Vuelo",
+  METRICAS: "Metricas",
 } as const;
 
 // Nombres de endpoint
@@ -25,12 +27,18 @@ export const ENDPOINT = {
   CREATEUPDATECITY: "CrearActualizarCiudad",
   SEARCHMETHODPAY: "ConsultarMetodoPago",
   CREATEUPDATEMETHODPAY: "CrearActualizarMetodoPago",
-  SEARCHCREDITS: "ConsultarCreditoUsuario",
-  CREATEUPDATECREDITS: "CrearActualizarCreditoUsuario",
   SEARCHPLANE: "ConsultarAvion",
   CREATEUPDATEPLANE: "CrearActualizarAvion",
   SEARCHSEATPLANE: "ConsultarAsientoAvion",
   CREATEUPDATESEATPLANE: "CrearActualizarAsientoAvion",
+  SEARCHFLIGHT: "ConsultarVueloPersonalizado",
+  CREATEFLIGHT: "CrearVuelo",
+  UPDATEFLIGHT: "ActualizarVuelo",
+  SEARCHSEATFLIGHT: "ConsultarVueloAsientos",
+  UPDATESTATEFLIGHT: "ActualizarEstadoVuelo",
+  MOSTSEARCHFLIGHTS: "ConsultarVuelosMasBuscados",
+  SEARCHFLIGHTSAVAILABLE: "ConsultarVueloDisponibles",
+  SEARCHHISTORYFLIGHT: "ConsultarVueloHistorico",
 } as const;
 
 // Timeout por defecto para fetch

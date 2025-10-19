@@ -17,6 +17,7 @@ import {
   Tooltip,
   IconButton,
   useTheme,
+  Chip,
 } from "@mui/material";
 import {
   Save as SaveIcon,
@@ -24,6 +25,8 @@ import {
   Edit as EditIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import { useAppUI } from "../../context/useAppUI";
 import type { ErrorResponse } from "../../api/types/errorResponse";
 import type { responseAllPlane } from "../../api/types/plane";
@@ -356,7 +359,44 @@ const AsientoAvionDialog: React.FC<Props> = ({ open, avion, onClose }) => {
                   <TableCell>{asiento.asientoAvionVIP ? "Sí" : "No"}</TableCell>
                   <TableCell>{asiento.asientoAvionVIPPorcentaje}%</TableCell>
                   <TableCell>
-                    <Checkbox checked={asiento.asientoAvionEstado} disabled />
+                    <Chip
+                      icon={
+                        asiento.asientoAvionEstado ? (
+                          <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />
+                        ) : (
+                          <CancelRoundedIcon sx={{ fontSize: 18 }} />
+                        )
+                      }
+                      label={asiento.asientoAvionEstado ? "Activo" : "Inactivo"}
+                      sx={{
+                        fontWeight: 600,
+                        borderRadius: "10px",
+                        px: 1,
+                        py: 0.5,
+                        color: asiento.asientoAvionEstado
+                          ? "#166534"
+                          : "#991b1b", // texto
+                        backgroundColor: asiento.asientoAvionEstado
+                          ? "rgba(22, 101, 52, 0.1)" // verde suave translúcido
+                          : "rgba(153, 27, 27, 0.1)", // rojo suave translúcido
+                        "& .MuiChip-icon": {
+                          color: asiento.asientoAvionEstado
+                            ? "#16a34a"
+                            : "#dc2626", // icono con tono fuerte
+                          ml: 0.5,
+                        },
+                        "&:hover": {
+                          backgroundColor: asiento.asientoAvionEstado
+                            ? "rgba(22, 101, 52, 0.15)"
+                            : "rgba(153, 27, 27, 0.15)",
+                          transform: "scale(1.02)",
+                          transition: "all 0.2s ease-in-out",
+                        },
+                        boxShadow: asiento.asientoAvionEstado
+                          ? "0 0 10px rgba(34, 197, 94, 0.15)"
+                          : "0 0 10px rgba(239, 68, 68, 0.15)",
+                      }}
+                    />
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip title="Editar asiento">
