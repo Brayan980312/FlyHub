@@ -18,6 +18,7 @@ import {
   Tooltip,
   Autocomplete,
   useTheme,
+  Chip,
 } from "@mui/material";
 import {
   Save as SaveIcon,
@@ -25,6 +26,8 @@ import {
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 
 const CiudadForm: React.FC = () => {
   const { mostrarNotificacion } = useAppUI();
@@ -54,13 +57,47 @@ const CiudadForm: React.FC = () => {
   }, []);
 
   const handleSearchCiudades = async () => {
-    const dataObtenida: responseAllCity[] = await searchCity();
-    setCiudades(dataObtenida);
+    try {
+      const dataObtenida: responseAllCity[] = await searchCity();
+      setCiudades(dataObtenida);
+    } catch (error) {
+      const err = error as ErrorResponse;
+      if (
+        (err.status === 422 || err.status === 403 || err.status === 401) &&
+        err.detail
+      ) {
+        mostrarNotificacion(err.title, err.detail, "warning");
+      } else {
+        mostrarNotificacion(
+          "Error en la apicación",
+          "Error desconocido.",
+          "error"
+        );
+      }
+    }
   };
 
   const handleSearchPaises = async () => {
-    const dataObtenida: responseAllCountry[] = await searchPaises();
-    setPaises(dataObtenida);
+    try {
+      const dataObtenida: responseAllCountry[] = await searchPaises({
+        paisEstado: true,
+      });
+      setPaises(dataObtenida);
+    } catch (error) {
+      const err = error as ErrorResponse;
+      if (
+        (err.status === 422 || err.status === 403 || err.status === 401) &&
+        err.detail
+      ) {
+        mostrarNotificacion(err.title, err.detail, "warning");
+      } else {
+        mostrarNotificacion(
+          "Error en la apicación",
+          "Error desconocido.",
+          "error"
+        );
+      }
+    }
   };
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
@@ -292,7 +329,6 @@ const CiudadForm: React.FC = () => {
               {ciudades
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((ciudad) => {
-                  const pais = paises.find((p) => p.paisId === ciudad.paisId);
                   return (
                     <TableRow
                       key={ciudad.ciudadId}
@@ -309,9 +345,44 @@ const CiudadForm: React.FC = () => {
                     >
                       <TableCell>{ciudad.ciudadNombre}</TableCell>
                       <TableCell>{ciudad.ciudadNomenclatura}</TableCell>
-                      <TableCell>{pais ? pais.paisNombre : "—"}</TableCell>
+                      <TableCell>{ciudad.paisNombreNomenclatura}</TableCell>
                       <TableCell>
-                        <Checkbox checked={ciudad.ciudadEstado} disabled />
+                        <Chip
+                          icon={
+                            ciudad.ciudadEstado ? (
+                              <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />
+                            ) : (
+                              <CancelRoundedIcon sx={{ fontSize: 18 }} />
+                            )
+                          }
+                          label={ciudad.ciudadEstado ? "Activo" : "Inactivo"}
+                          sx={{
+                            fontWeight: 600,
+                            borderRadius: "10px",
+                            px: 1,
+                            py: 0.5,
+                            color: ciudad.ciudadEstado ? "#166534" : "#991b1b", // texto
+                            backgroundColor: ciudad.ciudadEstado
+                              ? "rgba(22, 101, 52, 0.1)" // verde suave translúcido
+                              : "rgba(153, 27, 27, 0.1)", // rojo suave translúcido
+                            "& .MuiChip-icon": {
+                              color: ciudad.ciudadEstado
+                                ? "#16a34a"
+                                : "#dc2626", // icono con tono fuerte
+                              ml: 0.5,
+                            },
+                            "&:hover": {
+                              backgroundColor: ciudad.ciudadEstado
+                                ? "rgba(22, 101, 52, 0.15)"
+                                : "rgba(153, 27, 27, 0.15)",
+                              transform: "scale(1.02)",
+                              transition: "all 0.2s ease-in-out",
+                            },
+                            boxShadow: ciudad.ciudadEstado
+                              ? "0 0 10px rgba(34, 197, 94, 0.15)"
+                              : "0 0 10px rgba(239, 68, 68, 0.15)",
+                          }}
+                        />
                       </TableCell>
                       <TableCell align="center">
                         <Tooltip title="Editar ciudad">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -17,12 +17,6 @@ import {
   ListItemButton,
   Collapse,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -37,7 +31,6 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   AttachMoney as AttachMoneyIcon,
-  AddCircle as AddCircleIcon,
 } from "@mui/icons-material";
 import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
 import ConnectingAirportsIcon from "@mui/icons-material/ConnectingAirports";
@@ -47,14 +40,9 @@ import MetodoPagoForm from "./admin/methodPay";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import CiudadForm from "./admin/city";
 import PaisForm from "./admin/country";
-import {
-  createUpdateCreditoUsuario,
-  searchCreditoUsuario,
-} from "../api/services/creditUserService";
-import { useAppUI } from "../context/useAppUI";
-import type { ErrorResponse } from "../api/types/errorResponse";
-import type { responseAllCreditUser } from "../api/types/credist";
 import AvionForm from "./admin/plane";
+import VueloForm from "./admin/flight";
+import BusquedaVuelos from "./client/flight";
 
 // ======= Tipos =======
 type MenuItemBase = {
@@ -130,15 +118,10 @@ const GlassContent = styled(Box)(() => ({
 
 // ======= Componente principal =======
 const AppLayout: React.FC = () => {
-  const [creditosUsuario, setcreditosUsuario] =
-    useState<responseAllCreditUser>();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [selectedMenuItem, setSelectedMenuItem] = useState<string>("");
   const [collapsed, setCollapsed] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [valorCargar, setValorCargar] = useState<number>(0);
-  const { mostrarNotificacion } = useAppUI();
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -153,63 +136,6 @@ const AppLayout: React.FC = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
-  };
-
-  useEffect(() => {
-    handleSearchCreditUser();
-  }, []);
-
-  const handleSearchCreditUser = async () => {
-    const dataObtenida: responseAllCreditUser = await searchCreditoUsuario();
-    if (
-      dataObtenida.creditoUsuarioId == null ||
-      dataObtenida.creditoUsuarioId == 0
-    ) {
-      dataObtenida.creditoUsuarioId = 0;
-      dataObtenida.creditoUsuarioCreditos = 0;
-    }
-    setcreditosUsuario(dataObtenida);
-  };
-
-  // ======= Nueva funcionalidad: Cargar créditos =======
-  const handleAbrirModal = () => setModalOpen(true);
-  const handleCerrarModal = () => {
-    setValorCargar(0);
-    setModalOpen(false);
-  };
-
-  const handleCargarCreditos = async () => {
-    if (valorCargar > 0) {
-      try {
-        await createUpdateCreditoUsuario({
-          creditoUsuarioId: creditosUsuario?.creditoUsuarioId,
-          usuarioId: creditosUsuario?.usuarioId,
-          creditoUsuarioCreditos: valorCargar,
-          accion: 1,
-        });
-        mostrarNotificacion(
-          "Cargar creditos",
-          "Créditos cargados con exito",
-          "success"
-        );
-        handleCerrarModal();
-        handleSearchCreditUser();
-      } catch (error) {
-        const err = error as ErrorResponse;
-        if (
-          (err.status === 422 || err.status === 403 || err.status === 401) &&
-          err.detail
-        ) {
-          mostrarNotificacion(err.title, err.detail, "warning");
-        } else {
-          mostrarNotificacion(
-            "Error en la apicación",
-            "Error desconocido.",
-            "error"
-          );
-        }
-      }
-    }
   };
 
   // ======= Menú =======
@@ -244,15 +170,15 @@ const AppLayout: React.FC = () => {
     {
       text: "Vuelos",
       icon: <ConnectingAirportsIcon />,
-      component: <AvionForm />,
+      component: <VueloForm />,
     },
   ];
 
   const clientMenu: MenuItem[] = [
     {
-      text: "Inscribir materias",
-      icon: <BookIcon />,
-      component: <ParametrosForm />,
+      text: "Busqueda Vuelos",
+      icon: <ConnectingAirportsIcon />,
+      component: <BusquedaVuelos />,
     },
   ];
 
@@ -446,28 +372,6 @@ const AppLayout: React.FC = () => {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {usuarioNombres}
           </Typography>
-
-          {/* Créditos y botón de carga (solo clientes) */}
-          {userRole?.rolId !== 1 && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <AttachMoneyIcon sx={{ color: "#0f7c77" }} />
-              <Typography variant="body1">
-                {creditosUsuario?.creditoUsuarioCreditos.toLocaleString(
-                  "es-CO",
-                  {
-                    style: "currency",
-                    currency: "COP",
-                    minimumFractionDigits: 0,
-                  }
-                )}
-              </Typography>
-              <Tooltip title="Cargar créditos">
-                <IconButton color="inherit" onClick={handleAbrirModal}>
-                  <AddCircleIcon sx={{ color: "#0f7c77" }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          )}
         </Toolbar>
       </AppBarStyled>
 
@@ -513,82 +417,6 @@ const AppLayout: React.FC = () => {
         <Toolbar />
         <GlassContent>{renderContent()}</GlassContent>
       </MainContainer>
-
-      {/* Modal de carga de créditos */}
-      <Dialog
-        open={modalOpen}
-        onClose={(event, reason) => {
-          // Evita cerrar al hacer clic fuera o presionar ESC
-          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-            handleCerrarModal();
-          }
-        }}
-        PaperProps={{
-          sx: {
-            background: "rgba(30,30,30,0.9)",
-            color: "#fff",
-            borderRadius: "16px",
-            backdropFilter: "blur(10px)",
-          },
-        }}
-      >
-        <DialogTitle>Cargar créditos</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Valor a cargar (COP)"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={valorCargar === 0 ? "" : valorCargar}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-
-              // Solo permitir números y vacío
-              if (/^\d*$/.test(inputValue)) {
-                const numericValue = inputValue === "" ? 0 : Number(inputValue);
-
-                // Limitar a máximo 10.000.000
-                if (numericValue <= 10000000) {
-                  setValorCargar(numericValue);
-                }
-              }
-            }}
-            placeholder="Ingrese el valor (máx. 10.000.000)"
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                color: "#fff",
-                "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
-              },
-              "& .MuiInputLabel-root": { color: "#aaa" },
-              // Quitar flechas de incremento/decremento
-              "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
-                { display: "none" },
-              "& input[type=number]": { MozAppearance: "textfield" },
-            }}
-          />
-
-          {/* Mensaje de advertencia cuando se excede el límite */}
-          {valorCargar > 10000000 && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-              El valor máximo permitido es 1.000.000 COP
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCerrarModal} color="error">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleCargarCreditos}
-            color="success"
-            disabled={valorCargar <= 0 || valorCargar > 10000000}
-          >
-            Cargar créditos
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

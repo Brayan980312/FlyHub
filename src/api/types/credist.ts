@@ -1,7 +1,5 @@
 // Request crear y actualizar los creditos del usuario en el sistema
 export interface createUpdateCreditUser {
-  creditoUsuarioId?: number;
-  usuarioId?: number;
   creditoUsuarioCreditos: number;
   accion: number;
 }

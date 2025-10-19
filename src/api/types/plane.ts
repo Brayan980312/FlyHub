@@ -11,5 +11,8 @@ export interface responseAllPlane {
   avionId: number;
   avionNombre: string;
   ciudadId: number;
+  ciudadNombre: string;
+  ciudadNomenclatura: string;
+  ciudadNombreNomenclatura: string;
   avionEstado: boolean;
 }

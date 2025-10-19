@@ -49,8 +49,24 @@ const ParametrosForm: React.FC = () => {
   }, []);
 
   const handleSearchParams = async () => {
-    const dataObtenida: responseAllParams[] = await searchParams();
-    setParametros(dataObtenida);
+    try {
+      const dataObtenida: responseAllParams[] = await searchParams();
+      setParametros(dataObtenida);
+    } catch (error) {
+      const err = error as ErrorResponse;
+      if (
+        (err.status === 422 || err.status === 403 || err.status === 401) &&
+        err.detail
+      ) {
+        mostrarNotificacion(err.title, err.detail, "warning");
+      } else {
+        mostrarNotificacion(
+          "Error en la apicación",
+          "Error desconocido.",
+          "error"
+        );
+      }
+    }
   };
 
   const handleChangePage = (_event: unknown, newPage: number) => {

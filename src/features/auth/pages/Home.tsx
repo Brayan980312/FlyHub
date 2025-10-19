@@ -30,6 +30,12 @@ import type { ErrorResponse } from "../../../api/types/errorResponse";
 import { loginUser, registerUser } from "../../../api/services/authService";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useNavigate } from "react-router-dom";
+import { searchMostSearchFlights } from "../../../api/services/mostSearchFlightsService";
+import type { ResponseMostSearchFlights } from "../../../api/types/mostSearchFlights";
+import type { ResponseAllFlightAvailable } from "../../../api/types/flight";
+import { searchFlightAvailable } from "../../../api/services/flightService";
+import { searchCity } from "../../../api/services/ciudadService";
+import type { responseAllCity } from "../../../api/types/city";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -37,17 +43,25 @@ const Home: React.FC = () => {
   const [view, setView] = useState<"home" | "login" | "register">("home");
 
   /** Estado de busqueda de vuelos */
-  const [origen, setOrigen] = useState("");
-  const [destino, setDestino] = useState("");
+  const [origen, setOrigen] = useState<number | null>(0);
+  const [destino, setDestino] = useState<number | null>(0);
   const [fecha, setFecha] = useState<Date | null>(null);
   const [pasajeros, setPasajeros] = useState<string>("1");
+  const [vuelosDisponibles, setVuelosDisponibles] = useState<
+    ResponseAllFlightAvailable[]
+  >([]);
 
   /** Estado de mensaje para modal de espera */
   const [loading, setLoading] = useState(true);
   const [message, setMessageLoading] = useState("Cargando...");
 
-  /** Estado para abrir panel  */
+  /** Estado para abrir panel de vuelos más buscados*/
   const [open, setOpen] = useState(false);
+  const [vuelosMasBuscados, setVuelosMasBuscados] = useState<
+    ResponseMostSearchFlights[]
+  >([]);
+
+  const [ciudades, setCiudades] = useState<responseAllCity[]>([]);
 
   /** Login */
   const [formDataLogin, setFormDataLogin] = useState({
@@ -151,138 +165,51 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    // Simular un proceso de carga, por ejemplo 2 segundos
+    // Simular un proceso de carga
     const timer = setTimeout(() => {
       setMessageLoading("Cargando...");
-      setLoading(false); // Oculta el modal automáticamente
+      // Manda a llamar la función para cargar las ciudades activas del sistema
+      handleSearchCiudades();
+      setLoading(false);
     }, 5000);
 
-    return () => clearTimeout(timer); // Limpiar timer al desmontar
+    return () => clearTimeout(timer);
   }, []);
 
-  const aeropuertos = [
-    { codigo: "BOG", nombre: "Bogotá (BOG)" },
-    { codigo: "MDE", nombre: "Medellín (MDE)" },
-    { codigo: "CTG", nombre: "Cartagena (CTG)" },
-    { codigo: "CLO", nombre: "Cali (CLO)" },
-  ];
+  useEffect(() => {
+    if (open) {
+      handleMostSearchFlights();
+    }
+  }, [open]);
 
-  const flights = [
-    {
-      id: 4,
-      departTime: "10:39",
-      departCode: "BOG",
-      arriveTime: "12:08",
-      arriveCode: "SMR",
-      duration: "1h 29m",
-      type: "Directo",
-      operator: "Operado por Avianca Express",
-      price: "COP 690.430",
-    },
-  ];
+  const handleMostSearchFlights = async () => {
+    try {
+      const response = await searchMostSearchFlights();
+      setVuelosMasBuscados(response);
+    } catch (error) {
+      const err = error as ErrorResponse;
 
-  interface Ruta {
-    origen: string;
-    destino: string;
-    precio: string;
-    operador: string;
-    duracion: string;
-    salida: string;
-    llegada: string;
-  }
+      if (
+        (err.status === 422 || err.status === 403 || err.status === 401) &&
+        err.detail
+      ) {
+        setTitulo(err.title);
+        setMensaje(err.detail);
+        setTipo("warning");
+        setAbierto(true);
+      } else {
+        setTitulo("Error en la apicación.");
+        setMensaje("Error desconocido.");
+        setTipo("error");
+        setAbierto(true);
+      }
+    }
+  };
 
-  const rutas: Ruta[] = [
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca Express",
-      duracion: "1h 38m",
-      salida: "06:05",
-      llegada: "07:43",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca",
-      duracion: "1h 30m",
-      salida: "08:14",
-      llegada: "09:44",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca",
-      duracion: "1h 31m",
-      salida: "09:30",
-      llegada: "11:01",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca Express",
-      duracion: "1h 39m",
-      salida: "11:45",
-      llegada: "13:24",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca",
-      duracion: "1h 32m",
-      salida: "14:00",
-      llegada: "15:32",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca",
-      duracion: "1h 34m",
-      salida: "16:00",
-      llegada: "17:34",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca Express",
-      duracion: "1h 28m",
-      salida: "18:00",
-      llegada: "19:28",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca",
-      duracion: "1h 31m",
-      salida: "20:00",
-      llegada: "21:31",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca",
-      duracion: "1h 35m",
-      salida: "22:00",
-      llegada: "23:35",
-    },
-    {
-      origen: "BOG",
-      destino: "SMR",
-      precio: "690.430",
-      operador: "Avianca Express",
-      duracion: "1h 30m",
-      salida: "23:45",
-      llegada: "01:15",
-    },
-  ];
+  const handleSearchCiudades = async () => {
+    const data = await searchCity({ ciudadEstado: true });
+    setCiudades(data);
+  };
 
   const handleBuscar = () => {
     const numPasajeros = parseInt(pasajeros);
@@ -295,9 +222,40 @@ const Home: React.FC = () => {
     )
       return;
 
-    alert(
-      `Buscando vuelos de ${origen} a ${destino} el ${fecha.toLocaleDateString()} para ${numPasajeros} pasajero(s)`
-    );
+    handleSearchFlights();
+  };
+
+  const handleSearchFlights = async () => {
+    try {
+      const fechaFormateada = fecha
+        ? new Date(fecha).toISOString().split("T")[0]
+        : null;
+
+      const dataObtenida: ResponseAllFlightAvailable[] =
+        await searchFlightAvailable({
+          CiudadOrigenId: origen!,
+          CiudadDestinoId: destino!,
+          VueloFechaSalida: fechaFormateada!,
+          CantidadPasajeros: pasajeros,
+        });
+      setVuelosDisponibles(dataObtenida);
+    } catch (error) {
+      const err = error as ErrorResponse;
+      if (
+        (err.status === 422 || err.status === 403 || err.status === 401) &&
+        err.detail
+      ) {
+        setTitulo(err.title);
+        setMensaje(err.detail);
+        setTipo("warning");
+        setAbierto(true);
+      } else {
+        setTitulo("Error en la apicación.");
+        setMensaje("Error desconocido.");
+        setTipo("error");
+        setAbierto(true);
+      }
+    }
   };
 
   const cerrarNotificacion = () => {
@@ -394,12 +352,40 @@ const Home: React.FC = () => {
     }
   };
 
+  const getDuracionVuelo = (
+    salida: Date | string,
+    llegada: Date | string
+  ): string => {
+    const salidaDate = new Date(salida);
+    const llegadaDate = new Date(llegada);
+
+    if (isNaN(salidaDate.getTime()) || isNaN(llegadaDate.getTime())) return "";
+
+    const diffMs = llegadaDate.getTime() - salidaDate.getTime();
+
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(
+      (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (diffDays > 0) {
+      return `${diffDays}d ${diffHours}h ${diffMinutes}m`;
+    }
+
+    return `${diffHours}h ${diffMinutes}m`;
+  };
+
+  const formatCOP = (valor: number): string => {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(valor);
+  };
+
   const isFormValid =
-    origen.trim() !== "" &&
-    destino.trim() !== "" &&
-    fecha !== null &&
-    !isNaN(parseInt(pasajeros)) &&
-    parseInt(pasajeros) > 0;
+    origen! > 0 && destino! > 0 && fecha && Number(pasajeros) > 0;
 
   return (
     <AnimatedContainer>
@@ -502,19 +488,18 @@ const Home: React.FC = () => {
                 gutterBottom
                 sx={{ mb: 2, color: "#fff" }}
               >
-                Encuentra tu próximo destino ✈️
+                Encuentra tu próximo destino
               </Typography>
 
               <Grid container spacing={3}>
                 {/* ORIGEN */}
                 <Grid item xs={12} sm={6} md={3}>
                   <Autocomplete
-                    options={aeropuertos.filter((a) => a.codigo !== destino)}
-                    getOptionLabel={(option) => option.nombre}
-                    value={aeropuertos.find((a) => a.codigo === origen) || null}
+                    options={ciudades.filter((a) => a.ciudadId !== destino)}
+                    getOptionLabel={(option) => option.ciudadNombreNomenclatura}
+                    value={ciudades.find((a) => a.ciudadId === origen) || null}
                     onChange={(_, newValue) => {
-                      if (!newValue) return;
-                      setOrigen(newValue.codigo);
+                      setOrigen(newValue ? newValue.ciudadId : null);
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -584,14 +569,11 @@ const Home: React.FC = () => {
                 {/* DESTINO */}
                 <Grid item xs={12} sm={6} md={3}>
                   <Autocomplete
-                    options={aeropuertos.filter((a) => a.codigo !== origen)}
-                    getOptionLabel={(option) => option.nombre}
-                    value={
-                      aeropuertos.find((a) => a.codigo === destino) || null
-                    }
+                    options={ciudades.filter((a) => a.ciudadId !== origen)}
+                    getOptionLabel={(option) => option.ciudadNombreNomenclatura}
+                    value={ciudades.find((a) => a.ciudadId === destino) || null}
                     onChange={(_, newValue) => {
-                      if (!newValue) return;
-                      setDestino(newValue.codigo);
+                      setDestino(newValue ? newValue.ciudadId : null);
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -1009,7 +991,7 @@ const Home: React.FC = () => {
                 fontWeight={600}
                 sx={{ letterSpacing: 0.3, color: "#0f7c77" }}
               >
-                Más buscados
+                Vuelos más buscados
               </Typography>
               {open ? (
                 <ExpandLess sx={{ transition: "0.3s", color: "#0f7c77" }} />
@@ -1060,20 +1042,20 @@ const Home: React.FC = () => {
                       mb={2}
                       sx={{ color: "#0f7c77" }}
                     >
-                      ✈️ Top 10 rutas más buscadas
+                      Top vuelos más buscados
                     </Typography>
                     <Divider
                       sx={{ mb: 2, borderColor: "rgba(255,255,255,0.15)" }}
                     />
 
-                    {rutas.length > 0 ? (
+                    {vuelosMasBuscados.length > 0 ? (
                       <Grid
                         container
                         spacing={2}
                         justifyContent="center"
                         alignItems="center"
                       >
-                        {rutas.map((r, i) => (
+                        {vuelosMasBuscados.map((r, i) => (
                           <Grid item xs={12} sm={6} md={4} key={i}>
                             <Paper
                               sx={{
@@ -1109,7 +1091,8 @@ const Home: React.FC = () => {
                                   fontWeight={600}
                                   sx={{ color: "rgba(255,255,255,0.95)" }}
                                 >
-                                  {r.origen} → {r.destino}
+                                  {r.ciudadOrigenNomenclatura} →{" "}
+                                  {r.ciudadDestinoNomenclatura}
                                 </Typography>
                               </Box>
 
@@ -1162,10 +1145,10 @@ const Home: React.FC = () => {
         {view === "home" && (
           <>
             {/* Resultado de vuelos buscados */}
-            {flights.length > 0 ? (
-              flights.map((f) => (
+            {vuelosDisponibles.length > 0 ? (
+              vuelosDisponibles.map((f) => (
                 <Paper
-                  key={f.id}
+                  key={f.vueloId}
                   elevation={10}
                   sx={{
                     p: 3,
@@ -1191,13 +1174,21 @@ const Home: React.FC = () => {
                   {/* Origen */}
                   <Stack spacing={0.5} alignItems="flex-start">
                     <Typography variant="h4" fontWeight={700} color="#fff">
-                      {f.departTime}
+                      {f.vueloFechaHoraSalida &&
+                        new Date(f.vueloFechaHoraSalida).toLocaleTimeString(
+                          "es-CO",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          }
+                        )}
                     </Typography>
                     <Typography
                       variant="subtitle1"
                       color="rgba(255,255,255,0.6)"
                     >
-                      {f.departCode}
+                      {f.ciudadOrigenNomenclatura}
                     </Typography>
                   </Stack>
 
@@ -1218,10 +1209,14 @@ const Home: React.FC = () => {
                         variant="body2"
                         sx={{ color: "#0f7c77", fontWeight: 600 }}
                       >
-                        {f.type}
+                        Directo
                       </Typography>
                       <Typography variant="body2" color="rgba(255,255,255,0.6)">
-                        | {f.duration}
+                        |{" "}
+                        {getDuracionVuelo(
+                          f.vueloFechaHoraSalida,
+                          f.vueloFechaHoraLlegada
+                        )}
                       </Typography>
                     </Box>
 
@@ -1262,7 +1257,7 @@ const Home: React.FC = () => {
                     </Box>
 
                     <Chip
-                      label={f.operator}
+                      label="Operado por FlyHub"
                       size="small"
                       variant="outlined"
                       sx={{
@@ -1277,13 +1272,21 @@ const Home: React.FC = () => {
                   {/* Destino */}
                   <Stack spacing={0.5} alignItems="flex-end">
                     <Typography variant="h4" fontWeight={700} color="#fff">
-                      {f.arriveTime}
+                      {f.vueloFechaHoraLlegada &&
+                        new Date(f.vueloFechaHoraLlegada).toLocaleTimeString(
+                          "es-CO",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          }
+                        )}
                     </Typography>
                     <Typography
                       variant="subtitle1"
                       color="rgba(255,255,255,0.6)"
                     >
-                      {f.arriveCode}
+                      {f.ciudadDestinoNomenclatura}
                     </Typography>
                   </Stack>
 
@@ -1300,35 +1303,127 @@ const Home: React.FC = () => {
 
                   {/* Precio y botón */}
                   <Stack
-                    spacing={1}
+                    spacing={0.8}
                     alignItems="center"
                     justifyContent="center"
                     sx={{
-                      minWidth: 180,
+                      minWidth: 160,
+                      p: 1,
+                      position: "relative",
                     }}
                   >
-                    <Typography variant="caption" color="rgba(255,255,255,0.7)">
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "rgba(255,255,255,0.6)",
+                        letterSpacing: "0.4px",
+                        fontSize: "0.7rem",
+                      }}
+                    >
                       Desde
                     </Typography>
-                    <Typography variant="h5" fontWeight={700} color="#fff">
-                      {f.price}
-                    </Typography>
+
+                    {f.vueloDescuento && f.vueloDescuento > 0 ? (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 0.2,
+                        }}
+                      >
+                        {/* Precio original tachado */}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "rgba(255,255,255,0.4)",
+                            textDecoration: "line-through",
+                            fontSize: "0.8rem",
+                          }}
+                        >
+                          {formatCOP(f.vueloPrecio)}
+                        </Typography>
+
+                        {/* Precio con descuento */}
+                        <Typography
+                          variant="h6"
+                          fontWeight={700}
+                          sx={{
+                            color: "#00e676",
+                            textShadow: "0 0 6px rgba(0,230,118,0.25)",
+                            fontSize: "1.1rem",
+                            animation: "fadeIn 0.4s ease-in-out",
+                            "@keyframes fadeIn": {
+                              from: {
+                                opacity: 0,
+                                transform: "translateY(4px)",
+                              },
+                              to: { opacity: 1, transform: "translateY(0)" },
+                            },
+                          }}
+                        >
+                          {formatCOP(
+                            Math.round(
+                              f.vueloPrecio * (1 - f.vueloDescuento / 100)
+                            )
+                          )}
+                        </Typography>
+
+                        {/* Etiqueta de descuento */}
+                        <Chip
+                          label={`-${f.vueloDescuento}%`}
+                          size="small"
+                          sx={{
+                            mt: 0.2,
+                            fontSize: "0.65rem",
+                            fontWeight: 600,
+                            color: "#00e676",
+                            borderColor: "rgba(0,230,118,0.3)",
+                            borderWidth: 1,
+                            borderStyle: "solid",
+                            background: "rgba(15,124,119,0.15)",
+                            px: 0.6,
+                            py: 0,
+                            height: 20,
+                            borderRadius: 1.5,
+                          }}
+                        />
+                      </Box>
+                    ) : (
+                      <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        sx={{
+                          color: "#fff",
+                          fontSize: "1.1rem",
+                          textShadow: "0 0 4px rgba(255,255,255,0.2)",
+                        }}
+                      >
+                        {formatCOP(f.vueloPrecio)}
+                      </Typography>
+                    )}
+
+                    {/* Botón comprar */}
                     <Button
                       variant="contained"
                       sx={{
-                        mt: 0.5,
+                        mt: 0.6,
                         backgroundColor: "#0f7c77",
                         textTransform: "none",
-                        px: 3,
+                        px: 2.2,
+                        py: 0.5,
                         fontWeight: 600,
-                        borderRadius: 2,
+                        fontSize: "0.8rem",
+                        borderRadius: 1.5,
+                        boxShadow: "0 0 6px rgba(15,124,119,0.3)",
                         "&:hover": {
                           backgroundColor: "#0c615e",
+                          transform: "translateY(-1px)",
+                          boxShadow: "0 0 10px rgba(15,124,119,0.4)",
                         },
                       }}
-                      onClick={() =>
-                        alert(`Comprar vuelo ${f.departCode} - ${f.arriveCode}`)
-                      }
+                      onClick={() => alert(`Comprar vuelo`)}
                     >
                       Comprar
                     </Button>
