@@ -131,7 +131,8 @@ const Home: React.FC = () => {
         });
 
         // Agrega la información al localSotrage
-        localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokenJWT);
+        localStorage.setItem(STORAGE_KEYS.TOKEN, response.accessToken);
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
         localStorage.setItem("usuarioId", response.usuarioId.toString());
         localStorage.setItem(
           "usuarioIdentificacion",

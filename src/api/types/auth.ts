@@ -13,7 +13,9 @@ interface RolesUsuario {
 
 // Response de login
 export interface LoginResponse {
-  tokenJWT: string;
+  accessToken: string;
+  refreshToken: string;
+  expiraEn: Date;
   usuarioId: number;
   usuarioIdentificacion: string;
   usuarioNombreCompleto: string;

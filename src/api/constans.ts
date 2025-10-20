@@ -20,6 +20,7 @@ export const CONTROLLER = {
 export const ENDPOINT = {
   REGISTERUSER: "RegistrarUsuario",
   LOGINUSER: "LoginUsuario",
+  REFRESHTOKEN: "RefreshToken",
   SEARCHPARAMS: "ConsultarParametros",
   UPDATEPARAM: "ActualizarParametro",
   SEARCHCOUNTRY: "ConsultarPais",
@@ -51,4 +52,5 @@ export const DEFAULT_TIMEOUT = 10000;
 // Nombre de la clave que usaremos en localStorage para guardar el token JWT
 export const STORAGE_KEYS = {
   TOKEN: "auth_token",
+  REFRESH_TOKEN: "refresh_token",
 };

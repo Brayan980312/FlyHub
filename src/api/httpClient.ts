@@ -1,75 +1,89 @@
-import { DEFAULT_TIMEOUT, STORAGE_KEYS } from "./constans";
+import {
+  DEFAULT_TIMEOUT,
+  STORAGE_KEYS,
+  BASE_URLS,
+  CONTROLLER,
+  ENDPOINT,
+} from "./constans";
 import type { ErrorResponse } from "./types/errorResponse";
-/**
- * Obtiene el token JWT actual almacenado en localStorage.
- * @returns Token como string o null si no existe.
- */
+
+// 🔒 Control global para evitar múltiples llamadas simultáneas a RefreshToken
+let refreshInProgress: Promise<string | null> | null = null;
+
+/** Obtiene el token JWT actual almacenado */
 export function getAuthToken(): string | null {
   return localStorage.getItem(STORAGE_KEYS.TOKEN);
 }
 
-/**
- * Guarda el token JWT en localStorage.
- * @param token Token JWT a guardar.
- */
+/** Guarda el token JWT en localStorage */
 export function setAuthToken(token: string): void {
   localStorage.setItem(STORAGE_KEYS.TOKEN, token);
 }
 
-/**
- * Elimina el token JWT de localStorage (por ejemplo, en logout o error 401).
- */
+/** Elimina tokens y limpia sesión */
 export function clearAuthToken(): void {
   localStorage.clear();
 }
 
+/** Guarda el refresh token */
+export function setRefreshToken(token: string): void {
+  localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+}
+
+/** Obtiene el refresh token */
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+}
+
+/** Elimina el refresh token */
+export function clearRefreshToken(): void {
+  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+}
+
 /**
- * Función genérica para manejar la respuesta de un `fetch`.
- * Si la respuesta es exitosa (status 200-299), parsea y devuelve el JSON como tipo T.
- * Si la respuesta es un error (status >= 400), lanza un `ErrorResponse`.
- *
- * @param response - La respuesta devuelta por `fetch`.
- * @returns Una promesa con el cuerpo parseado como tipo T.
- * @throws Un objeto `ErrorResponse` en caso de error HTTP.
+ * Maneja respuesta HTTP genérica.
+ * Si hay error 401, intenta refrescar token (una sola vez concurrente).
  */
-export async function handleResponse<T>(response: Response): Promise<T> {
+export async function handleResponse<T>(
+  response: Response,
+  retryRequest?: () => Promise<Response>
+): Promise<T> {
   if (!response.ok) {
-    // Manejo global de 401
-    if (response.status === 401) {
+    if (
+      response.status === 401 &&
+      !window.location.pathname.includes("/login")
+    ) {
+      const newToken = await tryRefreshToken();
+
+      if (newToken && retryRequest) {
+        const retryResponse = await retryRequest();
+        if (retryResponse.ok) return retryResponse.json() as Promise<T>;
+      }
+
       clearAuthToken();
+      clearRefreshToken();
       window.location.href = "/login";
+      return Promise.reject("Sesión expirada. Inicie sesión nuevamente.");
     }
 
-    // Determinar si la respuesta es JSON
     const contentType = response.headers.get("content-type");
-
-    if (contentType && contentType.includes("application/json")) {
+    if (contentType?.includes("application/json")) {
       const errorJson: ErrorResponse = await response.json();
-
       throw errorJson;
     } else {
-      // Si no es JSON → fallback a texto
       const errorText = await response.text();
-
-      const fallbackError: ErrorResponse = {
+      throw {
         status: response.status,
         detail: errorText || `HTTP error! status: ${response.status}`,
-      };
-
-      throw fallbackError;
+      } as ErrorResponse;
     }
   }
 
-  // Si todo bien → devuelve el cuerpo parseado como T
   return response.json() as Promise<T>;
 }
 
 /**
- * Ejecuta una petición fetch con un timeout configurable.
- * Si la respuesta tarda más de DEFAULT_TIMEOUT ms, se cancela la petición.
- * @param resource URL a la cual se hace la petición.
- * @param options Opciones de la petición fetch (método, headers, body, etc).
- * @returns Response de la petición.
+ * Fetch con timeout configurable.
  */
 async function fetchWithTimeout(
   resource: RequestInfo,
@@ -95,18 +109,50 @@ async function fetchWithTimeout(
 }
 
 /**
- * Maneja la respuesta HTTP.
- * Si es exitosa (2..), devuelve el cuerpo de la respuesta como JSON.
- * Si es error (por ejemplo, 401), lanza una excepción.
- * @param response Response de la petición.
- * @returns Cuerpo de la respuesta como tipo T.
+ * 🔄 Intenta refrescar el token (solo una vez concurrente).
  */
+async function tryRefreshToken(): Promise<string | null> {
+  if (refreshInProgress) {
+    // Esperar a que termine la llamada actual si ya hay una en curso
+    return refreshInProgress;
+  }
 
-/**
- * Obtiene los headers por defecto para la petición.
- * Incluye 'Content-Type: application/json' y 'Authorization: Bearer <token>' si existe.
- * @returns Objeto con headers.
- */
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+
+  // Guardamos la promesa activa
+  refreshInProgress = (async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URLS.MSSEGURIDAD}/${CONTROLLER.SEGURIDAD}/${ENDPOINT.REFRESHTOKEN}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        }
+      );
+
+      if (!response.ok) {
+        refreshInProgress = null;
+        return null;
+      }
+
+      const data = await response.json();
+      setAuthToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
+
+      refreshInProgress = null;
+      return data.accessToken;
+    } catch {
+      refreshInProgress = null;
+      return null;
+    }
+  })();
+
+  return refreshInProgress;
+}
+
+/** Headers por defecto con token JWT */
 function getDefaultHeaders(): Record<string, string> {
   const token = getAuthToken();
 
@@ -114,27 +160,16 @@ function getDefaultHeaders(): Record<string, string> {
     "Content-Type": "application/json",
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 }
 
-/**
- * Hace una petición HTTP GET.
- * @template TResponse Tipo de dato esperado en la respuesta.
- * @param url URL base a la cual se realizará la petición.
- * @param params Parámetros opcionales que se agregarán como query string en la URL.
- * @param customHeaders Headers adicionales opcionales que se incluirán en la petición.
- * @returns Una promesa que resuelve con el cuerpo de la respuesta como tipo TResponse.
- */
+/** GET */
 export async function httpGet<TResponse>(
   url: string,
   params: Record<string, string | number | boolean | Date> = {},
   customHeaders: Record<string, string> = {}
 ): Promise<TResponse> {
-  // Construimos los query params si existen
   const queryString = new URLSearchParams(
     Object.entries(params).reduce<Record<string, string>>(
       (acc, [key, value]) => {
@@ -145,64 +180,48 @@ export async function httpGet<TResponse>(
     )
   ).toString();
 
-  // Agregamos los params a la URL si existen
   const urlWithParams = queryString ? `${url}?${queryString}` : url;
 
-  const response = await fetchWithTimeout(urlWithParams, {
-    method: "GET",
-    headers: {
-      ...getDefaultHeaders(),
-      ...customHeaders,
-    },
-  });
+  const doRequest = () =>
+    fetchWithTimeout(urlWithParams, {
+      method: "GET",
+      headers: { ...getDefaultHeaders(), ...customHeaders },
+    });
 
-  return handleResponse<TResponse>(response);
+  const response = await doRequest();
+  return handleResponse<TResponse>(response, doRequest);
 }
 
-/**
- * Hace una petición HTTP POST.
- * @param url URL completa de la petición.
- * @param data Objeto a enviar en el cuerpo como JSON.
- * @param customHeaders Headers adicionales opcionales.
- * @returns Cuerpo de la respuesta como tipo TResponse.
- */
+/** POST */
 export async function httpPost<TRequest, TResponse>(
   url: string,
   data: TRequest,
   customHeaders: Record<string, string> = {}
 ): Promise<TResponse> {
-  const response = await fetchWithTimeout(url, {
-    method: "POST",
-    headers: {
-      ...getDefaultHeaders(),
-      ...customHeaders,
-    },
-    body: JSON.stringify(data),
-  });
+  const doRequest = () =>
+    fetchWithTimeout(url, {
+      method: "POST",
+      headers: { ...getDefaultHeaders(), ...customHeaders },
+      body: JSON.stringify(data),
+    });
 
-  return handleResponse<TResponse>(response);
+  const response = await doRequest();
+  return handleResponse<TResponse>(response, doRequest);
 }
 
-/**
- * Hace una petición HTTP PUT.
- * @param url URL completa de la petición.
- * @param data Objeto a enviar en el cuerpo como JSON.
- * @param customHeaders Headers adicionales opcionales.
- * @returns Cuerpo de la respuesta como tipo TResponse.
- */
+/** PUT */
 export async function httpPut<TRequest, TResponse>(
   url: string,
   data: TRequest,
   customHeaders: Record<string, string> = {}
 ): Promise<TResponse> {
-  const response = await fetchWithTimeout(url, {
-    method: "PUT",
-    headers: {
-      ...getDefaultHeaders(),
-      ...customHeaders,
-    },
-    body: JSON.stringify(data),
-  });
+  const doRequest = () =>
+    fetchWithTimeout(url, {
+      method: "PUT",
+      headers: { ...getDefaultHeaders(), ...customHeaders },
+      body: JSON.stringify(data),
+    });
 
-  return handleResponse<TResponse>(response);
+  const response = await doRequest();
+  return handleResponse<TResponse>(response, doRequest);
 }
