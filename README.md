@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# FlyHub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Sistema para gestión y compra de vuelos**
 
-Currently, two official plugins are available:
+FlyHub es una aplicación web desarrollada con **React + TypeScript** y **Material UI**, diseñada para la gestión de vuelos y la compra de boletos. Incluye integración con APIs externas y un diseño moderno con iconos de Material UI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Tecnologías utilizadas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React 19.1.1 + TypeScript
+- **Estilos y componentes UI:** Material UI
+- **Iconos:** Material UI Icons
+- **Gestión de dependencias:** npm
+- **Node.js:** 20.19.5
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Requisitos previos
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Antes de ejecutar el proyecto, asegúrate de tener instalado lo siguiente:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Node.js 20.19.5**
+- **npm** (viene incluido con Node.js)
+- Un editor de código recomendado: Visual Studio Code
+- Conexión a internet para instalar dependencias y consumir las APIs
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Instalación
+
+Sigue estos pasos para ejecutar FlyHub en tu máquina local:
+
+1. Clona el repositorio:
+
+```bash
+   git clone https://github.com/Brayan980312/FlyHub
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Ingresa a la carpeta de proyecto:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+   cd flyhub
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+3. Instala las dependencias:
+
+```bash
+   npm install
+```
+
+4. Arranca el proyecto en modo desarrollo:
+
+```bash
+   npm run dev
+```
+
+5. Accede a la aplicación desde tu navegador:
+
+```bash
+   http://localhost:5173
+```
+
+---
+
+## Configuración de APIs
+
+Todas las rutas de las APIs que consume la aplicación se encuentran configuradas en el archivo:
+Asegúrate de actualizar este archivo con las URLs correctas de tus servicios antes de ejecutar la aplicación con tu ambiente.
+
+```bash
+   src/api/constants.ts
 ```

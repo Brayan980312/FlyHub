@@ -1151,7 +1151,8 @@ const Home: React.FC = () => {
                   key={f.vueloId}
                   elevation={10}
                   sx={{
-                    p: 3,
+                    px: 3,
+                    py: 0,
                     borderRadius: 3,
                     marginTop: 1,
                     display: "flex",
@@ -1403,30 +1404,6 @@ const Home: React.FC = () => {
                         {formatCOP(f.vueloPrecio)}
                       </Typography>
                     )}
-
-                    {/* Botón comprar */}
-                    <Button
-                      variant="contained"
-                      sx={{
-                        mt: 0.6,
-                        backgroundColor: "#0f7c77",
-                        textTransform: "none",
-                        px: 2.2,
-                        py: 0.5,
-                        fontWeight: 600,
-                        fontSize: "0.8rem",
-                        borderRadius: 1.5,
-                        boxShadow: "0 0 6px rgba(15,124,119,0.3)",
-                        "&:hover": {
-                          backgroundColor: "#0c615e",
-                          transform: "translateY(-1px)",
-                          boxShadow: "0 0 10px rgba(15,124,119,0.4)",
-                        },
-                      }}
-                      onClick={() => alert(`Comprar vuelo`)}
-                    >
-                      Comprar
-                    </Button>
                   </Stack>
                 </Paper>
               ))
@@ -1434,9 +1411,10 @@ const Home: React.FC = () => {
               <Paper
                 elevation={6}
                 sx={{
-                  mt: 3,
-                  p: 4,
-                  borderRadius: 3,
+                  mt: 1,
+                  px: 3,
+                  py: 0.3,
+                  borderRadius: 1.5,
                   textAlign: "center",
                   background: "rgba(0,0,0,0.5)",
                   backdropFilter: "blur(8px)",
