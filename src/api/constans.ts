@@ -13,6 +13,7 @@ export const CONTROLLER = {
   AVION: "Avion",
   VUELO: "Vuelo",
   METRICAS: "Metricas",
+  COMPRAS: "Compras",
 } as const;
 
 // Nombres de endpoint
@@ -39,6 +40,9 @@ export const ENDPOINT = {
   MOSTSEARCHFLIGHTS: "ConsultarVuelosMasBuscados",
   SEARCHFLIGHTSAVAILABLE: "ConsultarVueloDisponibles",
   SEARCHHISTORYFLIGHT: "ConsultarVueloHistorico",
+  RESERVESEATFLIGHT: "ReservaAsientosVuelo",
+  BUYSEATFLIGHT: "CompraAsientosVuelo",
+  SEARCHBUYSEATFLIGHT: "BuscarComprasUsuario",
 } as const;
 
 // Timeout por defecto para fetch

@@ -25,7 +25,6 @@ import {
   Menu as MenuIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
-  Book as BookIcon,
   Public as PublicIcon,
   LocationCity as LocationCityIcon,
   ChevronLeft as ChevronLeftIcon,
@@ -38,11 +37,13 @@ import { useNavigate } from "react-router-dom";
 import ParametrosForm from "./admin/params";
 import MetodoPagoForm from "./admin/methodPay";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import CiudadForm from "./admin/city";
 import PaisForm from "./admin/country";
 import AvionForm from "./admin/plane";
 import VueloForm from "./admin/flight";
 import BusquedaVuelos from "./client/flight";
+import ComprasRealizadasUsuario from "./client/buyFlight";
 
 // ======= Tipos =======
 type MenuItemBase = {
@@ -179,6 +180,11 @@ const AppLayout: React.FC = () => {
       text: "Busqueda Vuelos",
       icon: <ConnectingAirportsIcon />,
       component: <BusquedaVuelos />,
+    },
+    {
+      text: "Vuelos Comprados",
+      icon: <ShoppingBagIcon />,
+      component: <ComprasRealizadasUsuario />,
     },
   ];
 
